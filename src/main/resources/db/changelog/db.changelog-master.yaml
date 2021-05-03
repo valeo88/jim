@@ -1,2 +1,6 @@
 databaseChangeLog:
   - logicalFilePath: db/changelog/db.changelog-master.yaml
+
+  - include:
+      file: 20210503-currency.yaml
+      relativeToChangelogFile: true

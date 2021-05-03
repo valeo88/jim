@@ -1,0 +1,75 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20210503-currency-table
+      author: valeo88
+      context: dev or test or prod
+      changes:
+        - createTable:
+            tableName: currency
+            columns:
+              - column:
+                  name: name
+                  type: varchar(50)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: code
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: number
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 20210503-currency-data
+      author: valeo88
+      context: dev or test or prod
+      comment: "Add some currencies"
+      changes:
+        - insert:
+            tableName: currency
+            columns:
+              - column:
+                  name: name
+                  value: "US Dollar"
+              - column:
+                  name: code
+                  value: "USD"
+              - column:
+                  name: number
+                  value: "840"
+        - insert:
+            tableName: currency
+            columns:
+              - column:
+                  name: name
+                  value: "Euro"
+              - column:
+                  name: code
+                  value: "EUR"
+              - column:
+                  name: number
+                  value: "978"
+        - insert:
+            tableName: currency
+            columns:
+              - column:
+                  name: name
+                  value: "Russian Ruble"
+              - column:
+                  name: code
+                  value: "RUB"
+              - column:
+                  name: number
+                  value: "643"
+        - tagDatabase:
+            tag: 0.0.1
+      rollback:
+        - delete:
+            tableName: currency
+            where: code in ('USD', 'EUR', 'RUB')
