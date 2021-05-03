@@ -9,14 +9,14 @@ databaseChangeLog:
             tableName: currency
             columns:
               - column:
-                  name: name
-                  type: varchar(50)
+                  name: code
+                  type: varchar(10)
                   constraints:
                     primaryKey: true
                     nullable: false
               - column:
-                  name: code
-                  type: varchar(10)
+                  name: name
+                  type: varchar(50)
                   constraints:
                     nullable: false
               - column:

@@ -13,11 +13,11 @@ import javax.persistence.Table;
 public class Currency {
 
     @Id
-    @Column(name = "name", nullable = false)
-    private String name;
-
     @Column(name = "code", nullable = false)
     private String code;
+
+    @Column(name = "name", nullable = false)
+    private String name;
 
     @Column(name = "number", nullable = false)
     private String number;
