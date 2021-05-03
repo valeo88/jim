@@ -4,3 +4,7 @@ databaseChangeLog:
   - include:
       file: 20210503-currency.yaml
       relativeToChangelogFile: true
+
+  - include:
+      file: 20210503-instrument-category.yaml
+      relativeToChangelogFile: true

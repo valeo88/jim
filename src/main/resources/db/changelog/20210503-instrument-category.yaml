@@ -1,0 +1,89 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20210503-instrument-category-table
+      author: valeo88
+      context: dev or test or prod
+      changes:
+        - createTable:
+            tableName: instrument_category
+            columns:
+              - column:
+                  name: code
+                  type: varchar(50)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 20210503-instrument-category-data
+      author: valeo88
+      context: dev or test or prod
+      comment: "Add some categories"
+      changes:
+        - insert:
+            tableName: instrument_category
+            columns:
+              - column:
+                  name: code
+                  value: "GOVB"
+              - column:
+                  name: name
+                  value: "Government bonds"
+        - insert:
+            tableName: instrument_category
+            columns:
+              - column:
+                  name: code
+                  value: "CORPB"
+              - column:
+                  name: name
+                  value: "Corporate bonds"
+        - insert:
+            tableName: instrument_category
+            columns:
+              - column:
+                  name: code
+                  value: "ETFB"
+              - column:
+                  name: name
+                  value: "ETF bonds"
+        - insert:
+            tableName: instrument_category
+            columns:
+              - column:
+                  name: code
+                  value: "ETFSHR"
+              - column:
+                  name: name
+                  value: "ETF shares"
+        - insert:
+            tableName: instrument_category
+            columns:
+              - column:
+                  name: code
+                  value: "ETFGLD"
+              - column:
+                  name: name
+                  value: "ETF gold"
+        - insert:
+            tableName: instrument_category
+            columns:
+              - column:
+                  name: code
+                  value: "SHR"
+              - column:
+                  name: name
+                  value: "Shares"
+
+        - tagDatabase:
+            tag: 0.0.2
+      rollback:
+        - delete:
+            tableName: instrument_category
+            where: code in ('GOVB', 'CORPB', 'ETFB', 'ETFSHR', 'ETFGLD', 'SHR')
