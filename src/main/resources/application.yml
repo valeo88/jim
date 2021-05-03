@@ -1,5 +1,9 @@
 
 spring:
+  datasource:
+    url: jdbc:h2:file:~/jim-app
+    username: admin
+    password: admin
   jpa:
     hibernate:
       ddl-auto: none # disable for use Liquibase
