@@ -51,6 +51,25 @@ public class DictionariesService {
         return instrumentCategoryRepository.findAll();
     }
 
+    @Transactional
+    public InstrumentCategory saveInstrumentCategory(String code, String name) {
+        var category = instrumentCategoryRepository.findById(code).orElse(new InstrumentCategory());
+        category.setCode(code);
+        category.setName(name);
+        return instrumentCategoryRepository.save(category);
+    }
+
+    @Transactional
+    public boolean deleteInstrumentCategory(String code) {
+        var instrumentCategoryOpt = instrumentCategoryRepository.findById(code);
+        if (instrumentCategoryOpt.isPresent()) {
+            instrumentCategoryRepository.delete(instrumentCategoryOpt.get());
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public List<String> getInstrumentTypes() {
         return Arrays.stream(InstrumentType.values()).map(Enum::name).collect(Collectors.toList());
     }

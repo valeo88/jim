@@ -41,4 +41,23 @@ public class DictionariesCommands {
                 .map(InstrumentCategory::toString)
                 .collect(Collectors.joining(System.lineSeparator()));
     }
+
+    @ShellMethod(value = "Update instrument category or create if not exists", key = "save-category")
+    public String saveInstrumentCategory(String code, String name) {
+        return dictionariesService.saveInstrumentCategory(code, name).toString();
+    }
+
+    @ShellMethod(value = "Delete instrument category", key = "delete-category")
+    public String deleteInstrumentCategory(String code) {
+        if (dictionariesService.deleteInstrumentCategory(code)) {
+            return "Deleted instrument category with code " + code;
+        }
+        return "Not found instrument category with code " + code;
+    }
+
+    @ShellMethod(value = "Print all available instrument types", key = "instrument-types")
+    public String printInstrumentTypes() {
+        return dictionariesService.getInstrumentTypes().stream()
+                .collect(Collectors.joining(System.lineSeparator()));
+    }
 }
