@@ -8,3 +8,7 @@ databaseChangeLog:
   - include:
       file: 20210503-instrument-category.yaml
       relativeToChangelogFile: true
+
+  - include:
+      file: 20210505-instrument.yaml
+      relativeToChangelogFile: true

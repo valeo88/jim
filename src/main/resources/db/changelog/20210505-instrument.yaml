@@ -1,0 +1,63 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20210505-instrument-table
+      author: valeo88
+      context: dev or test or prod
+      changes:
+        - createTable:
+            tableName: instrument
+            columns:
+              - column:
+                  name: symbol
+                  type: varchar(50)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: currency_id
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category_id
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: isin
+                  type: varchar(255)
+
+        - addForeignKeyConstraint:
+            constraintName: fk_instrument_currency
+            baseTableName: instrument
+            baseColumnNames: currency_id
+            referencedTableName: currency
+            referencedColumnNames: code
+            onDelete: RESTRICT
+            onUpdate: CASCADE
+
+        - addForeignKeyConstraint:
+            constraintName: fk_instrument_category
+            baseTableName: instrument
+            baseColumnNames: category_id
+            referencedTableName: instrument_category
+            referencedColumnNames: code
+            onDelete: RESTRICT
+            onUpdate: CASCADE
+
+        - tagDatabase:
+            tag: 0.0.3
+      rollback:
+        - dropTable:
+            tableName: instrument
