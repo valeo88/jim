@@ -9,6 +9,7 @@ import ru.valeo.jim.domain.InstrumentType;
 import ru.valeo.jim.repository.CurrencyRepository;
 import ru.valeo.jim.repository.InstrumentCategoryRepository;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.Arrays;
 import java.util.List;
@@ -27,7 +28,7 @@ public class DictionariesService {
     }
 
     @Transactional
-    public Currency saveCurrency(@NotNull String code, @NotNull String name, @NotNull String number) {
+    public Currency saveCurrency(@NotBlank String code, @NotNull String name, @NotNull String number) {
         var currency = currencyRepository.findById(code).orElse(new Currency());
         currency.setCode(code);
         currency.setName(name);
@@ -36,7 +37,7 @@ public class DictionariesService {
     }
 
     @Transactional
-    public boolean deleteCurrency(@NotNull String code) {
+    public boolean deleteCurrency(@NotBlank String code) {
         var currencyOpt = currencyRepository.findById(code);
         if (currencyOpt.isPresent()) {
             currencyRepository.delete(currencyOpt.get());
@@ -52,7 +53,7 @@ public class DictionariesService {
     }
 
     @Transactional
-    public InstrumentCategory saveInstrumentCategory(String code, String name) {
+    public InstrumentCategory saveInstrumentCategory(@NotBlank String code, @NotNull String name) {
         var category = instrumentCategoryRepository.findById(code).orElse(new InstrumentCategory());
         category.setCode(code);
         category.setName(name);
@@ -60,7 +61,7 @@ public class DictionariesService {
     }
 
     @Transactional
-    public boolean deleteInstrumentCategory(String code) {
+    public boolean deleteInstrumentCategory(@NotBlank String code) {
         var instrumentCategoryOpt = instrumentCategoryRepository.findById(code);
         if (instrumentCategoryOpt.isPresent()) {
             instrumentCategoryRepository.delete(instrumentCategoryOpt.get());
