@@ -13,6 +13,7 @@ import ru.valeo.jim.repository.InstrumentCategoryRepository;
 import ru.valeo.jim.repository.InstrumentRepository;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,22 +31,32 @@ public class InstrumentsService {
     }
 
     @Transactional
-    public InstrumentDto save(@NotBlank String symbol, @NotBlank String name, @NotBlank String baseCurrencyCode,
-                              @NotBlank String typeName, @NotBlank String categoryCode, String isin) {
-        var currency = currencyRepository.findById(baseCurrencyCode)
-                .orElseThrow(() -> new CurrencyNotFoundException(baseCurrencyCode));
-        var category = instrumentCategoryRepository.findById(categoryCode)
-                .orElseThrow(() -> new InstrumentCategoryNotFoundException(categoryCode));
-        var type = InstrumentType.findByName(typeName);
+    public InstrumentDto save(@NotNull InstrumentDto dto) {
+        var currency = currencyRepository.findById(dto.getBaseCurrencyCode())
+                .orElseThrow(() -> new CurrencyNotFoundException(dto.getBaseCurrencyCode()));
+        var category = instrumentCategoryRepository.findById(dto.getCategoryCode())
+                .orElseThrow(() -> new InstrumentCategoryNotFoundException(dto.getCategoryCode()));
+        var type = InstrumentType.findByName(dto.getType());
 
-        var instrument = instrumentRepository.findById(symbol).orElseGet(Instrument::new);
-        instrument.setSymbol(symbol);
-        instrument.setName(name);
+        var instrument = instrumentRepository.findById(dto.getSymbol()).orElseGet(Instrument::new);
+        instrument.setSymbol(dto.getSymbol());
+        instrument.setName(dto.getName());
         instrument.setBaseCurrency(currency);
         instrument.setCategory(category);
         instrument.setType(type);
-        instrument.setIsin(isin);
+        instrument.setIsin(dto.getIsin());
 
         return InstrumentDto.from(instrumentRepository.save(instrument));
+    }
+
+    @Transactional
+    public boolean delete(@NotBlank String symbol) {
+        var instrumentOpt = instrumentRepository.findById(symbol);
+        if (instrumentOpt.isPresent()) {
+            instrumentRepository.delete(instrumentOpt.get());
+            return true;
+        } else {
+            return false;
+        }
     }
 }

@@ -32,9 +32,25 @@ public class InstrumentsCommands {
                                  String category,
                                  @ShellOption(defaultValue = NULL) String isin) {
         try {
-            return instrumentsService.save(symbol, name, currency, type, category, isin).toString();
+            var dto = new InstrumentDto();
+            dto.setSymbol(symbol);
+            dto.setName(name);
+            dto.setBaseCurrencyCode(currency);
+            dto.setType(type);
+            dto.setCategoryCode(category);
+            dto.setIsin(isin);
+
+            return instrumentsService.save(dto).toString();
         } catch (RuntimeException e) {
             return e.getMessage();
         }
+    }
+
+    @ShellMethod(value = "Delete instrument", key = "delete-instrument")
+    public String deleteInstrument(String symbol) {
+        if (instrumentsService.delete(symbol)) {
+            return "Deleted instrument with code " + symbol;
+        }
+        return "Not found instrument with code " + symbol;
     }
 }

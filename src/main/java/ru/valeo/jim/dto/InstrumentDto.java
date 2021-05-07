@@ -3,13 +3,16 @@ package ru.valeo.jim.dto;
 import lombok.Data;
 import ru.valeo.jim.domain.Instrument;
 
+import javax.validation.constraints.NotBlank;
+
 @Data
 public class InstrumentDto {
-    String symbol;
-    String name;
-    String baseCurrencyCode;
-    String type;
-    String categoryCode;
+
+    @NotBlank String symbol;
+    @NotBlank String name;
+    @NotBlank String baseCurrencyCode;
+    @NotBlank String type;
+    @NotBlank String categoryCode;
     String categoryName;
     String isin;
 
