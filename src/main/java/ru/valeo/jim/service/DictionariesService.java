@@ -1,77 +1,42 @@
 package ru.valeo.jim.service;
 
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import ru.valeo.jim.domain.Currency;
 import ru.valeo.jim.domain.InstrumentCategory;
-import ru.valeo.jim.domain.InstrumentType;
-import ru.valeo.jim.repository.CurrencyRepository;
-import ru.valeo.jim.repository.InstrumentCategoryRepository;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
-@AllArgsConstructor
-@Service
-public class DictionariesService {
+/** Service for working with dictionaries. */
+public interface DictionariesService {
 
-    private final CurrencyRepository currencyRepository;
-    private final InstrumentCategoryRepository instrumentCategoryRepository;
+    /** Get all available currencies. */
+    List<Currency> getCurrencies();
 
-    @Transactional(readOnly = true)
-    public List<Currency> getCurrencies() {
-        return currencyRepository.findAll();
-    }
+    /** Save existing currency or new if not exists.
+     * @param code - code (USD, EUR,...)
+     * @param name - name
+     * @param number - ISO number
+     * @return {@link Currency} */
+    Currency saveCurrency(@NotBlank String code, @NotNull String name, @NotNull String number);
 
-    @Transactional
-    public Currency saveCurrency(@NotBlank String code, @NotNull String name, @NotNull String number) {
-        var currency = currencyRepository.findById(code).orElse(new Currency());
-        currency.setCode(code);
-        currency.setName(name);
-        currency.setNumber(number);
-        return currencyRepository.save(currency);
-    }
+    /** Delete currency.
+     * @return - true if deleted. */
+    boolean deleteCurrency(@NotBlank String code);
 
-    @Transactional
-    public boolean deleteCurrency(@NotBlank String code) {
-        var currencyOpt = currencyRepository.findById(code);
-        if (currencyOpt.isPresent()) {
-            currencyRepository.delete(currencyOpt.get());
-            return true;
-        } else {
-            return false;
-        }
-    }
+    /** Get all available instrument categories. */
+    List<InstrumentCategory> getInstrumentCategories();
 
-    @Transactional(readOnly = true)
-    public List<InstrumentCategory> getInstrumentCategories() {
-        return instrumentCategoryRepository.findAll();
-    }
+    /** Save existing instrument category or new if not exists.
+     * @param code - code (SHR,...)
+     * @param name - name
+     * @return {@link InstrumentCategory} */
+    InstrumentCategory saveInstrumentCategory(@NotBlank String code, @NotNull String name);
 
-    @Transactional
-    public InstrumentCategory saveInstrumentCategory(@NotBlank String code, @NotNull String name) {
-        var category = instrumentCategoryRepository.findById(code).orElse(new InstrumentCategory());
-        category.setCode(code);
-        category.setName(name);
-        return instrumentCategoryRepository.save(category);
-    }
+    /** Delete instrument category.
+     * @return - true if deleted. */
+    boolean deleteInstrumentCategory(@NotBlank String code);
 
-    @Transactional
-    public boolean deleteInstrumentCategory(@NotBlank String code) {
-        var instrumentCategoryOpt = instrumentCategoryRepository.findById(code);
-        if (instrumentCategoryOpt.isPresent()) {
-            instrumentCategoryRepository.delete(instrumentCategoryOpt.get());
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public List<String> getInstrumentTypes() {
-        return Arrays.stream(InstrumentType.values()).map(Enum::name).collect(Collectors.toList());
-    }
+    /** Get all available instrument types.*/
+    List<String> getInstrumentTypes();
 }
