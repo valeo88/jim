@@ -1,0 +1,20 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20210510-bond-par-value
+      author: valeo88
+      context: dev or test or prod
+      changes:
+        - addColumn:
+            tableName: instrument
+            columns:
+              name: bond_par_value
+              type: decimal
+
+        - tagDatabase:
+            tag: 0.0.4
+
+      rollback:
+        - dropColumn:
+            columnName: bond_par_value
+            tableName: instrument

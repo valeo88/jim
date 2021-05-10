@@ -3,6 +3,7 @@ package ru.valeo.jim.domain;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 
 /** Financial instrument: share, bond, ETF, ... */
 @Data
@@ -30,5 +31,8 @@ public class Instrument {
 
     @Column(name = "isin")
     private String isin;
+
+    @Column(name = "bond_par_value")
+    private BigDecimal bondParValue;
 
 }

@@ -12,3 +12,7 @@ databaseChangeLog:
   - include:
       file: 20210505-instrument.yaml
       relativeToChangelogFile: true
+
+  - include:
+      file: 20210510-bond-par-value.yaml
+      relativeToChangelogFile: true
