@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.valeo.jim.domain.Instrument;
 import ru.valeo.jim.domain.InstrumentType;
+import ru.valeo.jim.dto.BondDto;
 import ru.valeo.jim.dto.InstrumentDto;
 import ru.valeo.jim.exception.CurrencyNotFoundException;
 import ru.valeo.jim.exception.InstrumentCategoryNotFoundException;
@@ -29,7 +30,14 @@ public class InstrumentsServiceImpl implements InstrumentsService {
     @Transactional(readOnly = true)
     @Override
     public List<InstrumentDto> getInstruments() {
-        return instrumentRepository.findAll().stream().map(InstrumentDto::from).collect(Collectors.toList());
+        return instrumentRepository.findAll().stream()
+                .map(instrument -> {
+                    if (InstrumentType.BOND == instrument.getType()) {
+                        return BondDto.from(instrument);
+                    } else {
+                        return InstrumentDto.from(instrument);
+                    }
+                }).collect(Collectors.toList());
     }
 
     @Transactional
@@ -50,6 +58,25 @@ public class InstrumentsServiceImpl implements InstrumentsService {
         instrument.setIsin(dto.getIsin());
 
         return InstrumentDto.from(instrumentRepository.save(instrument));
+    }
+
+    @Override
+    public BondDto save(@NotNull BondDto dto) {
+        var currency = currencyRepository.findById(dto.getBaseCurrencyCode())
+                .orElseThrow(() -> new CurrencyNotFoundException(dto.getBaseCurrencyCode()));
+        var category = instrumentCategoryRepository.findById(dto.getCategoryCode())
+                .orElseThrow(() -> new InstrumentCategoryNotFoundException(dto.getCategoryCode()));
+
+        var instrument = instrumentRepository.findById(dto.getSymbol()).orElseGet(Instrument::new);
+        instrument.setSymbol(dto.getSymbol());
+        instrument.setName(dto.getName());
+        instrument.setBaseCurrency(currency);
+        instrument.setCategory(category);
+        instrument.setType(InstrumentType.BOND);
+        instrument.setIsin(dto.getIsin());
+        instrument.setBondParValue(dto.getParValue());
+
+        return BondDto.from(instrumentRepository.save(instrument));
     }
 
     @Transactional

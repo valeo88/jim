@@ -32,7 +32,7 @@ class InstrumentsServiceImplTest {
     void shouldUpdateDtoIfExists() {
         var dto = createTestDto();
         var saved = service.save(dto);
-        saved.setType("BOND");
+        saved.setType("ETF");
 
         var updated = service.save(saved);
 
