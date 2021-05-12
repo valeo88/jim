@@ -1,0 +1,74 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20210512-instrument-position
+      author: valeo88
+      context: dev or test or prod
+      changes:
+        - createTable:
+            tableName: instrument_position
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: portfolio_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: instrument_id
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: accounting_price
+                  type: decimal
+                  constraints:
+                    nullable: false
+
+        - addAutoIncrement:
+            columnDataType: int
+            columnName: id
+            defaultOnNull: false
+            generationType: ALWAYS
+            incrementBy: 1
+            startWith: 1
+            tableName: instrument_position
+
+        - addForeignKeyConstraint:
+            constraintName: fk_instrument_position_portfolio
+            baseTableName: instrument_position
+            baseColumnNames: portfolio_id
+            referencedTableName: portfolio
+            referencedColumnNames: name
+            onDelete: RESTRICT
+            onUpdate: CASCADE
+
+        - addForeignKeyConstraint:
+            constraintName: fk_instrument_position_instrument
+            baseTableName: instrument_position
+            baseColumnNames: instrument_id
+            referencedTableName: instrument
+            referencedColumnNames: symbol
+            onDelete: RESTRICT
+            onUpdate: CASCADE
+
+        - addUniqueConstraint:
+            columnNames: portfolio_id, instrument_id
+            constraintName: unq_instrument_position_pi
+            tableName: instrument_position
+
+        - tagDatabase:
+            tag: 0.0.6
+      rollback:
+        - dropTable:
+            tableName: instrument_position

@@ -1,0 +1,41 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20210512-portfolio
+      author: valeo88
+      context: dev or test or prod
+      changes:
+        - createTable:
+            tableName: portfolio
+            columns:
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: currency_id
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: available_money
+                  type: decimal
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            constraintName: fk_portfolio_currency
+            baseTableName: portfolio
+            baseColumnNames: currency_id
+            referencedTableName: currency
+            referencedColumnNames: code
+            onDelete: RESTRICT
+            onUpdate: RESTRICT
+
+        - tagDatabase:
+            tag: 0.0.5
+      rollback:
+        - dropTable:
+            tableName: portfolio
