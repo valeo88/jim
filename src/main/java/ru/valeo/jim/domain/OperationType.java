@@ -19,6 +19,9 @@ public enum OperationType {
     /** Coupon given from bond. */
     COUPON,
 
+    /** Par value given from bond. */
+    BOND_REDEMPTION,
+
     /** Fees payed to broker, government, ... */
     TAX;
 }

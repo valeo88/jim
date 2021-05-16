@@ -1,0 +1,78 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20210516-operation
+      author: valeo88
+      context: dev or test or prod
+      changes:
+        - createTable:
+            tableName: operation
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: portfolio_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: instrument_id
+                  type: varchar(50)
+              - column:
+                  name: amount
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: price
+                  type: decimal
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+        - addAutoIncrement:
+            columnDataType: int
+            columnName: id
+            defaultOnNull: false
+            generationType: ALWAYS
+            incrementBy: 1
+            startWith: 1
+            tableName: operation
+
+        - addForeignKeyConstraint:
+            constraintName: fk_operation_portfolio
+            baseTableName: operation
+            baseColumnNames: portfolio_id
+            referencedTableName: portfolio
+            referencedColumnNames: name
+            onDelete: RESTRICT
+            onUpdate: CASCADE
+
+        - addForeignKeyConstraint:
+            constraintName: fk_operation_instrument
+            baseTableName: operation
+            baseColumnNames: instrument_id
+            referencedTableName: instrument
+            referencedColumnNames: symbol
+            onDelete: RESTRICT
+            onUpdate: CASCADE
+
+        - tagDatabase:
+            tag: 0.0.7
+      rollback:
+        - dropTable:
+            tableName: operation
