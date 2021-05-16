@@ -3,9 +3,11 @@ package ru.valeo.jim.service.impl;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.valeo.jim.config.ApplicationConfig;
 import ru.valeo.jim.domain.Portfolio;
 import ru.valeo.jim.dto.PortfolioDto;
 import ru.valeo.jim.exception.CurrencyNotFoundException;
+import ru.valeo.jim.exception.PortfolioNotFoundException;
 import ru.valeo.jim.repository.CurrencyRepository;
 import ru.valeo.jim.repository.PortfolioRepository;
 import ru.valeo.jim.service.PortfolioService;
@@ -21,6 +23,7 @@ public class PortfolioServiceImpl implements PortfolioService {
 
     private final PortfolioRepository portfolioRepository;
     private final CurrencyRepository currencyRepository;
+    private final ApplicationConfig applicationConfig;
 
     @Transactional(readOnly = true)
     @Override
@@ -57,6 +60,11 @@ public class PortfolioServiceImpl implements PortfolioService {
     @Transactional
     @Override
     public void setDefault(@NotBlank String name) {
-        // todo - implement with config class
+        var portfolioOpt = portfolioRepository.findById(name);
+        if (portfolioOpt.isPresent()) {
+            applicationConfig.setDefaultPortfolioName(name);
+        } else {
+            throw new PortfolioNotFoundException(name);
+        }
     }
 }

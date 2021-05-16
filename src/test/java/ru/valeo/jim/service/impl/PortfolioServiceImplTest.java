@@ -3,7 +3,9 @@ package ru.valeo.jim.service.impl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import ru.valeo.jim.config.ApplicationConfig;
 import ru.valeo.jim.dto.PortfolioDto;
+import ru.valeo.jim.exception.PortfolioNotFoundException;
 
 import java.math.BigDecimal;
 
@@ -14,6 +16,8 @@ class PortfolioServiceImplTest {
 
     @Autowired
     private PortfolioServiceImpl service;
+    @Autowired
+    private ApplicationConfig applicationConfig;
 
     @Test
     void shouldGetListOfPortfolios() {
@@ -48,6 +52,21 @@ class PortfolioServiceImplTest {
         service.delete(saved.getName());
 
         assertFalse(service.getPortfolios().contains(saved));
+    }
+
+    @Test
+    void shouldSetDefaultPortfolioIfExists() {
+        var dto = createTestDto();
+        var saved = service.save(dto);
+
+        service.setDefault(saved.getName());
+
+        assertEquals(saved.getName(), applicationConfig.getDefaultPortfolioName());
+    }
+
+    @Test
+    void shouldThrowExceptionOnSetDefaultPortfolioIfNotExists() {
+        assertThrows(PortfolioNotFoundException.class, () -> service.setDefault("UNKNOWN"));
     }
 
     private PortfolioDto createTestDto() {
