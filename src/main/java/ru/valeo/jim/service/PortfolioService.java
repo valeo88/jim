@@ -5,6 +5,7 @@ import ru.valeo.jim.dto.PortfolioDto;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Optional;
 
 /** Service for financial portfolios */
 public interface PortfolioService {
@@ -20,4 +21,7 @@ public interface PortfolioService {
 
     /** Set default portfolio. */
     void setDefault(@NotBlank String name);
+
+    /** Get default portfolio. */
+    Optional<PortfolioDto> getDefault();
 }

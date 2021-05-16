@@ -15,7 +15,10 @@ import ru.valeo.jim.service.PortfolioService;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static java.util.Optional.ofNullable;
 
 @AllArgsConstructor
 @Service
@@ -66,5 +69,12 @@ public class PortfolioServiceImpl implements PortfolioService {
         } else {
             throw new PortfolioNotFoundException(name);
         }
+    }
+
+    @Override
+    public Optional<PortfolioDto> getDefault() {
+        return ofNullable(applicationConfig.getDefaultPortfolioName())
+                .flatMap(portfolioRepository::findById)
+                .map(PortfolioDto::fromPortfolio);
     }
 }
