@@ -5,6 +5,7 @@ import lombok.Data;
 import javax.persistence.*;
 import javax.validation.constraints.Min;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @Table(name = "operation")
@@ -38,6 +39,12 @@ public class Operation {
 
     @Column(name = "deleted", nullable = false)
     private Boolean deleted = false;
+
+    @Column(name = "processed", nullable = false)
+    private Boolean processed = false;
+
+    @Column(name = "when_add")
+    private LocalDateTime whenAdd;
 
     public BigDecimal getTotalPrice() { return price.multiply(BigDecimal.valueOf(amount)); }
 }
