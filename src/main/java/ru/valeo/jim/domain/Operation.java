@@ -43,7 +43,7 @@ public class Operation {
     @Column(name = "processed", nullable = false)
     private Boolean processed = false;
 
-    @Column(name = "when_add")
+    @Column(name = "when_add", insertable = false)
     private LocalDateTime whenAdd;
 
     public BigDecimal getTotalPrice() { return price.multiply(BigDecimal.valueOf(amount)); }
