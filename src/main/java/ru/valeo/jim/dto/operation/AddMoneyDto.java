@@ -6,6 +6,7 @@ import ru.valeo.jim.domain.Operation;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @EqualsAndHashCode
 @Getter
@@ -16,6 +17,7 @@ public class AddMoneyDto {
 
     String portfolioName;
     String currencyCode;
+    LocalDateTime whenAdd;
     @NotNull @Min(0) BigDecimal value;
 
     public static AddMoneyDto from(Operation operation) {
@@ -23,6 +25,7 @@ public class AddMoneyDto {
         dto.setPortfolioName(operation.getPortfolio().getName());
         dto.setCurrencyCode(operation.getPortfolio().getCurrency().getCode());
         dto.setValue(operation.getTotalPrice());
+        dto.setWhenAdd(operation.getWhenAdd());
         return dto;
     }
 

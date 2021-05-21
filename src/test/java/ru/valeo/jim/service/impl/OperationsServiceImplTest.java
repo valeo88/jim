@@ -8,8 +8,7 @@ import ru.valeo.jim.exception.PortfolioNotFoundException;
 
 import java.math.BigDecimal;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class OperationsServiceImplTest {
@@ -30,6 +29,7 @@ class OperationsServiceImplTest {
         assertEquals(portofolioDto.getName(), operationDto.getPortfolioName());
         assertEquals(portofolioDto.getCurrencyCode(), operationDto.getCurrencyCode());
         assertEquals(value, operationDto.getValue());
+        assertNotNull(operationDto.getWhenAdd());
     }
 
     @Test

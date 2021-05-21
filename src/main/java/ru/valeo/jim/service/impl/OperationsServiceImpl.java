@@ -17,6 +17,7 @@ import ru.valeo.jim.service.OperationsService;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import static java.util.Optional.ofNullable;
 
@@ -37,6 +38,8 @@ public class OperationsServiceImpl implements OperationsService {
         operation.setPortfolio(portfolio);
         operation.setPrice(value);
         operation.setType(OperationType.ADD_MONEY);
+        operation.setWhenAdd(LocalDateTime.now());
+
         return AddMoneyDto.from(operationRepository.save(operation));
     }
 
