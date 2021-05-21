@@ -39,8 +39,10 @@ public class OperationsServiceImpl implements OperationsService {
         operation.setPrice(value);
         operation.setType(OperationType.ADD_MONEY);
         operation.setWhenAdd(LocalDateTime.now());
-
-        return AddMoneyDto.from(operationRepository.save(operation));
+        var result = AddMoneyDto.from(operationRepository.save(operation));
+        // todo think about entity listener or maybe events
+        processOperation(operation);
+        return result;
     }
 
     @Transactional
@@ -53,5 +55,23 @@ public class OperationsServiceImpl implements OperationsService {
         return portfolioRepository.findById(ofNullable(name)
                 .orElse(applicationConfig.getDefaultPortfolioName()))
                 .orElseThrow(() -> new PortfolioNotFoundException(name));
+    }
+
+    /** Process operation. */
+    private void processOperation(Operation operation) {
+        operation.setProcessed(true);
+        var portfolio = operation.getPortfolio();
+        switch (operation.getType()) {
+            case ADD_MONEY:
+                portfolio.setAvailableMoney(portfolio.getAvailableMoney().add(operation.getTotalPrice()));
+                break;
+            case WITHDRAW_MONEY:
+                portfolio.setAvailableMoney(portfolio.getAvailableMoney().subtract(operation.getTotalPrice()));
+                break;
+            default:
+                throw new UnsupportedOperationException(operation.getType().name());
+        }
+        operationRepository.save(operation);
+        portfolioRepository.save(portfolio);
     }
 }

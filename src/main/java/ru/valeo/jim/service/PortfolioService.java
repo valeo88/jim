@@ -13,6 +13,9 @@ public interface PortfolioService {
     /** Get all available portfolios. */
     List<PortfolioDto> getPortfolios();
 
+    /** Get portfolio by name. */
+    Optional<PortfolioDto> getPortfolio(@NotBlank String name);
+
     /** Save portfolio from DTO. */
     PortfolioDto save(@NotNull PortfolioDto dto);
 

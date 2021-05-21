@@ -7,6 +7,7 @@ import ru.valeo.jim.dto.PortfolioDto;
 import ru.valeo.jim.exception.PortfolioNotFoundException;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,15 +22,18 @@ class OperationsServiceImplTest {
     @Test
     void whenPortfolioExists_shouldAddMoney() {
         var value = new BigDecimal("101.5");
-        var portofolioDto = createTestPortfolioDto();
-        portfolioService.save(portofolioDto);
+        var portfolioDto = createTestPortfolioDto();
+        portfolioService.save(portfolioDto);
 
-        var operationDto = operationsService.addMoney(portofolioDto.getName(), value);
+        var operationDto = operationsService.addMoney(portfolioDto.getName(), value);
+        var reloadedPortfolioDto = portfolioService.getPortfolio(portfolioDto.getName());
 
-        assertEquals(portofolioDto.getName(), operationDto.getPortfolioName());
-        assertEquals(portofolioDto.getCurrencyCode(), operationDto.getCurrencyCode());
+        assertEquals(portfolioDto.getName(), operationDto.getPortfolioName());
+        assertEquals(portfolioDto.getCurrencyCode(), operationDto.getCurrencyCode());
         assertEquals(value, operationDto.getValue());
         assertNotNull(operationDto.getWhenAdd());
+        assertTrue(reloadedPortfolioDto.isPresent());
+        assertEquals(value, reloadedPortfolioDto.get().getAvailableMoney());
     }
 
     @Test
@@ -40,7 +44,7 @@ class OperationsServiceImplTest {
 
     private PortfolioDto createTestPortfolioDto() {
         var dto = new PortfolioDto();
-        dto.setName("Alpha");
+        dto.setName(UUID.randomUUID().toString());
         dto.setCurrencyCode("USD");
         dto.setAvailableMoney(BigDecimal.ZERO);
         return dto;

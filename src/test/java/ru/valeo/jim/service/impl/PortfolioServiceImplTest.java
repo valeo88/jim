@@ -8,6 +8,7 @@ import ru.valeo.jim.dto.PortfolioDto;
 import ru.valeo.jim.exception.PortfolioNotFoundException;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,7 +46,7 @@ class PortfolioServiceImplTest {
     }
 
     @Test
-    void shouldDeleteInstrumentIfExists() {
+    void shouldDeletePortfolioIfExists() {
         var dto = createTestDto();
         var saved = service.save(dto);
 
@@ -71,7 +72,7 @@ class PortfolioServiceImplTest {
 
     private PortfolioDto createTestDto() {
         var dto = new PortfolioDto();
-        dto.setName("Alpha");
+        dto.setName(UUID.randomUUID().toString());
         dto.setCurrencyCode("USD");
         dto.setAvailableMoney(BigDecimal.ZERO);
         return dto;

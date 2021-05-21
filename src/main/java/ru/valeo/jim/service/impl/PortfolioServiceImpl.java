@@ -34,6 +34,11 @@ public class PortfolioServiceImpl implements PortfolioService {
         return portfolioRepository.findAll().stream().map(PortfolioDto::fromPortfolio).collect(Collectors.toList());
     }
 
+    @Override
+    public Optional<PortfolioDto> getPortfolio(@NotBlank String name) {
+        return portfolioRepository.findById(name).map(PortfolioDto::fromPortfolio);
+    }
+
     @Transactional
     @Override
     public PortfolioDto save(@NotNull PortfolioDto dto) {
