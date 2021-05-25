@@ -16,9 +16,7 @@ import ru.valeo.jim.repository.OperationRepository;
 import ru.valeo.jim.repository.PortfolioRepository;
 import ru.valeo.jim.service.OperationsService;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import static java.util.Optional.ofNullable;
@@ -33,12 +31,12 @@ public class OperationsServiceImpl implements OperationsService {
 
     @Transactional
     @Override
-    public AddMoneyDto addMoney(String portfolioName, @NotNull @Min(0) BigDecimal value) {
-        var portfolio = loadPortfolio(portfolioName);
+    public AddMoneyDto addMoney(@NotNull AddMoneyDto dto) {
+        var portfolio = loadPortfolio(dto.getPortfolioName());
         var operation = new Operation();
         operation.setAmount(1);
         operation.setPortfolio(portfolio);
-        operation.setPrice(value);
+        operation.setPrice(dto.getValue());
         operation.setType(OperationType.ADD_MONEY);
         operation.setWhenAdd(LocalDateTime.now());
         operation = operationRepository.save(operation);
@@ -49,14 +47,14 @@ public class OperationsServiceImpl implements OperationsService {
 
     @Transactional
     @Override
-    public WithdrawMoneyDto withdrawMoney(String portfolioName, @NotNull @Min(0) BigDecimal value) {
-        var portfolio = loadPortfolio(portfolioName);
-        if (portfolio.getAvailableMoney().compareTo(value) < 0)
+    public WithdrawMoneyDto withdrawMoney(@NotNull WithdrawMoneyDto dto) {
+        var portfolio = loadPortfolio(dto.getPortfolioName());
+        if (portfolio.getAvailableMoney().compareTo(dto.getValue()) < 0)
             throw new InsufficientMoneyException(portfolio.getName());
         var operation = new Operation();
         operation.setAmount(1);
         operation.setPortfolio(portfolio);
-        operation.setPrice(value);
+        operation.setPrice(dto.getValue());
         operation.setType(OperationType.WITHDRAW_MONEY);
         operation.setWhenAdd(LocalDateTime.now());
         operation = operationRepository.save(operation);

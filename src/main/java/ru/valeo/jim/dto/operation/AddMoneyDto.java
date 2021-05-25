@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Builder
 @EqualsAndHashCode
 @Getter
 @Setter

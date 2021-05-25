@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.valeo.jim.dto.PortfolioDto;
+import ru.valeo.jim.dto.operation.AddMoneyDto;
+import ru.valeo.jim.dto.operation.WithdrawMoneyDto;
 import ru.valeo.jim.exception.InsufficientMoneyException;
 import ru.valeo.jim.exception.PortfolioNotFoundException;
 
@@ -22,58 +24,76 @@ class OperationsServiceImplTest {
 
     @Test
     void whenPortfolioExists_shouldAddMoney() {
-        var value = new BigDecimal("101.5");
         var portfolioDto = createTestPortfolioDto();
         portfolioService.save(portfolioDto);
+        var incomeDto = AddMoneyDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .value(new BigDecimal("101.5"))
+                .build();
 
-        var operationDto = operationsService.addMoney(portfolioDto.getName(), value);
+        var operationDto = operationsService.addMoney(incomeDto);
         var reloadedPortfolioDto = portfolioService.getPortfolio(portfolioDto.getName());
 
         assertEquals(portfolioDto.getName(), operationDto.getPortfolioName());
         assertEquals(portfolioDto.getCurrencyCode(), operationDto.getCurrencyCode());
-        assertEquals(value, operationDto.getValue());
+        assertEquals(incomeDto.getValue(), operationDto.getValue());
         assertNotNull(operationDto.getWhenAdd());
         assertTrue(reloadedPortfolioDto.isPresent());
-        assertEquals(value, reloadedPortfolioDto.get().getAvailableMoney());
-    }
-
-    @Test
-    void whenPortfolioExistsAndHasSufficientMoney_shouldWithdrawMoney() {
-        var balance = new BigDecimal("101.5");
-        var withdrawal = new BigDecimal("11.3");
-        var portfolioDto = createTestPortfolioDto();
-        portfolioService.save(portfolioDto);
-
-        assertThrows(InsufficientMoneyException.class,
-                () -> operationsService.withdrawMoney(portfolioDto.getName(), withdrawal));
+        assertEquals(incomeDto.getValue(), reloadedPortfolioDto.get().getAvailableMoney());
     }
 
     @Test
     void whenPortfolioExistsAndHasNotSufficientMoney_shouldThrowError() {
-        var balance = new BigDecimal("101.5");
-        var withdrawal = new BigDecimal("11.3");
+        var portfolioDto = createTestPortfolioDto();
+        portfolioService.save(portfolioDto);
+        var incomeDto = WithdrawMoneyDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .value(new BigDecimal("11.3"))
+                .build();
+
+        assertThrows(InsufficientMoneyException.class,
+                () -> operationsService.withdrawMoney(incomeDto));
+    }
+
+    @Test
+    void whenPortfolioExistsAndHasSufficientMoney_shouldWithdrawMoney() {
         var portfolioDto = createTestPortfolioDto();
         portfolioService.save(portfolioDto);
 
-        operationsService.addMoney(portfolioDto.getName(), balance);
-        var operationDto = operationsService.withdrawMoney(portfolioDto.getName(), withdrawal);
+        var addMoneyDto = AddMoneyDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .value(new BigDecimal("101.5"))
+                .build();
+        var withdrawMoneyDto = WithdrawMoneyDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .value(new BigDecimal("11.3"))
+                .build();
+
+        operationsService.addMoney(addMoneyDto);
+        var operationDto = operationsService.withdrawMoney(withdrawMoneyDto);
         var reloadedPortfolioDto = portfolioService.getPortfolio(portfolioDto.getName());
 
         assertEquals(portfolioDto.getName(), operationDto.getPortfolioName());
         assertEquals(portfolioDto.getCurrencyCode(), operationDto.getCurrencyCode());
-        assertEquals(withdrawal, operationDto.getValue());
+        assertEquals(withdrawMoneyDto.getValue(), operationDto.getValue());
         assertNotNull(operationDto.getWhenAdd());
         assertTrue(reloadedPortfolioDto.isPresent());
-        assertEquals(balance.subtract(withdrawal), reloadedPortfolioDto.get().getAvailableMoney());
+        assertEquals(addMoneyDto.getValue().subtract(withdrawMoneyDto.getValue()), reloadedPortfolioDto.get().getAvailableMoney());
     }
 
     @Test
     void whenPortfolioNotExists_shouldThrowException() {
         var notExistsPortfolioName = "UNKNOWN";
         assertThrows(PortfolioNotFoundException.class,
-                () -> operationsService.addMoney(notExistsPortfolioName, new BigDecimal("101.5")));
+                () -> operationsService.addMoney(AddMoneyDto.builder()
+                        .portfolioName(notExistsPortfolioName)
+                        .value(new BigDecimal("101.5"))
+                        .build()));
         assertThrows(PortfolioNotFoundException.class,
-                () -> operationsService.withdrawMoney(notExistsPortfolioName, new BigDecimal("101.5")));
+                () -> operationsService.withdrawMoney(WithdrawMoneyDto.builder()
+                        .portfolioName(notExistsPortfolioName)
+                        .value(new BigDecimal("101.5"))
+                        .build()));
     }
 
     private PortfolioDto createTestPortfolioDto() {
