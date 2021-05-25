@@ -1,6 +1,7 @@
 package ru.valeo.jim.service;
 
 import ru.valeo.jim.dto.operation.AddMoneyDto;
+import ru.valeo.jim.dto.operation.WithdrawMoneyDto;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -13,5 +14,5 @@ public interface OperationsService {
     AddMoneyDto addMoney(String portfolioName, @NotNull @Min(0) BigDecimal value);
 
     /** Withdraw money from portfolio. */
-    void withdrawMoney(String portfolioName, @NotNull @Min(0) BigDecimal value);
+    WithdrawMoneyDto withdrawMoney(String portfolioName, @NotNull @Min(0) BigDecimal value);
 }

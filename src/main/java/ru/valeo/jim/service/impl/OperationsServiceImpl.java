@@ -9,6 +9,8 @@ import ru.valeo.jim.domain.Operation;
 import ru.valeo.jim.domain.OperationType;
 import ru.valeo.jim.domain.Portfolio;
 import ru.valeo.jim.dto.operation.AddMoneyDto;
+import ru.valeo.jim.dto.operation.WithdrawMoneyDto;
+import ru.valeo.jim.exception.InsufficientMoneyException;
 import ru.valeo.jim.exception.PortfolioNotFoundException;
 import ru.valeo.jim.repository.OperationRepository;
 import ru.valeo.jim.repository.PortfolioRepository;
@@ -39,16 +41,28 @@ public class OperationsServiceImpl implements OperationsService {
         operation.setPrice(value);
         operation.setType(OperationType.ADD_MONEY);
         operation.setWhenAdd(LocalDateTime.now());
-        var result = AddMoneyDto.from(operationRepository.save(operation));
-        // todo think about entity listener or maybe events
+        operation = operationRepository.save(operation);
+
         processOperation(operation);
-        return result;
+        return AddMoneyDto.from(operation);
     }
 
     @Transactional
     @Override
-    public void withdrawMoney(String portfolioName, @NotNull @Min(0) BigDecimal value) {
-        // todo implement
+    public WithdrawMoneyDto withdrawMoney(String portfolioName, @NotNull @Min(0) BigDecimal value) {
+        var portfolio = loadPortfolio(portfolioName);
+        if (portfolio.getAvailableMoney().compareTo(value) < 0)
+            throw new InsufficientMoneyException(portfolio.getName());
+        var operation = new Operation();
+        operation.setAmount(1);
+        operation.setPortfolio(portfolio);
+        operation.setPrice(value);
+        operation.setType(OperationType.WITHDRAW_MONEY);
+        operation.setWhenAdd(LocalDateTime.now());
+        operation = operationRepository.save(operation);
+
+        processOperation(operation);
+        return WithdrawMoneyDto.from(operation);
     }
 
     private Portfolio loadPortfolio(String name) {
