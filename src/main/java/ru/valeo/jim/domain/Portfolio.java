@@ -4,6 +4,7 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @Table(name = "portfolio")
@@ -20,4 +21,10 @@ public class Portfolio {
 
     @Column(name = "available_money")
     private BigDecimal availableMoney = BigDecimal.ZERO;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "portfolio")
+    private List<InstrumentPosition> positions;
+
+    @OneToMany(mappedBy = "portfolio")
+    private List<Operation> operations;
 }
