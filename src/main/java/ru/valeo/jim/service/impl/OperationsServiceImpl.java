@@ -68,6 +68,7 @@ public class OperationsServiceImpl implements OperationsService {
         return WithdrawMoneyDto.from(operation);
     }
 
+    @Transactional
     @Override
     public BuyInstrumentDto buyInstrument(@NotNull BuyInstrumentDto dto) {
         var portfolio = loadPortfolio(dto.getPortfolioName());
@@ -140,16 +141,17 @@ public class OperationsServiceImpl implements OperationsService {
             portfolio.getOperations().stream()
                     .filter(Operation::getProcessed)
                     .filter(op -> !op.getDeleted())
+                    .filter(op -> op.getType() == OperationType.BUY)
                     .filter(op -> op.getInstrument().equals(operation.getInstrument()))
                     .forEach(op -> {
                         priceAmountMap.compute(op.getPrice(),
                                 (price, amount) -> amount == null ? op.getAmount() : amount + op.getAmount());
                     });
-            var priceAmountMultuplicationSum = priceAmountMap.entrySet().stream()
+            var priceAmountMultiplicationSum = priceAmountMap.entrySet().stream()
                     .map(entry -> entry.getKey().multiply(BigDecimal.valueOf(entry.getValue())))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             var count = BigDecimal.valueOf(priceAmountMap.values().stream().reduce(0, Integer::sum));
-            position.setAccountingPrice(priceAmountMultuplicationSum.divide(count));
+            position.setAccountingPrice(priceAmountMultiplicationSum.divide(count));
         } else {
             // add new position: operation price === accounting price
             var newPosition = new InstrumentPosition();

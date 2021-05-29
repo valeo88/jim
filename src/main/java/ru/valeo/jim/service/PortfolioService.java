@@ -1,5 +1,6 @@
 package ru.valeo.jim.service;
 
+import ru.valeo.jim.dto.InstrumentPositionDto;
 import ru.valeo.jim.dto.PortfolioDto;
 
 import javax.validation.constraints.NotBlank;
@@ -27,4 +28,7 @@ public interface PortfolioService {
 
     /** Get default portfolio. */
     Optional<PortfolioDto> getDefault();
+
+    /** Get all instrument positions in portfolio. */
+    List<InstrumentPositionDto> getInstrumentPositions(@NotBlank String portfolioName);
 }

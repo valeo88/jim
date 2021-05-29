@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.valeo.jim.config.ApplicationConfig;
 import ru.valeo.jim.domain.Portfolio;
+import ru.valeo.jim.dto.InstrumentPositionDto;
 import ru.valeo.jim.dto.PortfolioDto;
 import ru.valeo.jim.exception.CurrencyNotFoundException;
 import ru.valeo.jim.exception.PortfolioNotFoundException;
@@ -34,6 +35,7 @@ public class PortfolioServiceImpl implements PortfolioService {
         return portfolioRepository.findAll().stream().map(PortfolioDto::fromPortfolio).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Optional<PortfolioDto> getPortfolio(@NotBlank String name) {
         return portfolioRepository.findById(name).map(PortfolioDto::fromPortfolio);
@@ -76,10 +78,21 @@ public class PortfolioServiceImpl implements PortfolioService {
         }
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Optional<PortfolioDto> getDefault() {
         return ofNullable(applicationConfig.getDefaultPortfolioName())
                 .flatMap(portfolioRepository::findById)
                 .map(PortfolioDto::fromPortfolio);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<InstrumentPositionDto> getInstrumentPositions(@NotBlank String portfolioName) {
+        return portfolioRepository.findById(portfolioName)
+                .map(Portfolio::getPositions)
+                .map(positions -> positions.stream()
+                        .map(InstrumentPositionDto::from).collect(Collectors.toList()))
+                .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
     }
 }
