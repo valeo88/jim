@@ -8,10 +8,9 @@ import ru.valeo.jim.config.ApplicationConfig;
 import ru.valeo.jim.domain.*;
 import ru.valeo.jim.dto.operation.AddMoneyDto;
 import ru.valeo.jim.dto.operation.BuyInstrumentDto;
+import ru.valeo.jim.dto.operation.SellInstrumentDto;
 import ru.valeo.jim.dto.operation.WithdrawMoneyDto;
-import ru.valeo.jim.exception.InstrumentNotFoundException;
-import ru.valeo.jim.exception.InsufficientMoneyException;
-import ru.valeo.jim.exception.PortfolioNotFoundException;
+import ru.valeo.jim.exception.*;
 import ru.valeo.jim.repository.InstrumentRepository;
 import ru.valeo.jim.repository.OperationRepository;
 import ru.valeo.jim.repository.PortfolioRepository;
@@ -19,6 +18,7 @@ import ru.valeo.jim.service.OperationsService;
 
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -88,6 +88,26 @@ public class OperationsServiceImpl implements OperationsService {
         return BuyInstrumentDto.from(operation);
     }
 
+    @Transactional
+    @Override
+    public SellInstrumentDto sellInstrument(@NotNull SellInstrumentDto dto) {
+        var portfolio = loadPortfolio(dto.getPortfolioName());
+        var instrument = loadInstrument(dto.getSymbol());
+        checkIsAmountSufficient(portfolio, dto.getSymbol(), dto.getAmount());
+
+        var operation = new Operation();
+        operation.setType(OperationType.SELL);
+        operation.setInstrument(instrument);
+        operation.setPortfolio(portfolio);
+        operation.setPrice(dto.getPrice());
+        operation.setAmount(dto.getAmount());
+        operation.setWhenAdd(LocalDateTime.now());
+        operation = operationRepository.save(operation);
+
+        processOperation(operation);
+        return SellInstrumentDto.from(operation);
+    }
+
     private Instrument loadInstrument(String symbol) {
         return instrumentRepository.findById(symbol)
                 .orElseThrow(() -> new InstrumentNotFoundException(symbol));
@@ -104,6 +124,13 @@ public class OperationsServiceImpl implements OperationsService {
             throw new InsufficientMoneyException(portfolio.getName());
     }
 
+    private void checkIsAmountSufficient(Portfolio portfolio, String symbol, Integer amount) {
+        if (portfolio.getPositions().stream()
+                .filter(position -> position.getInstrument().getSymbol().equals(symbol))
+                .anyMatch(position -> position.getAmount() < amount))
+            throw new InsufficientAmountException(portfolio.getName(), symbol);
+    }
+
     /** Process operation. */
     private void processOperation(Operation operation) {
         operation.setProcessed(true);
@@ -118,6 +145,10 @@ public class OperationsServiceImpl implements OperationsService {
             case BUY:
                 portfolio.setAvailableMoney(portfolio.getAvailableMoney().subtract(operation.getTotalPrice()));
                 updateInstrumentPositionOnBuy(operation);
+                break;
+            case SELL:
+                portfolio.setAvailableMoney(portfolio.getAvailableMoney().add(operation.getTotalPrice()));
+                updateInstrumentPositionOnSell(operation);
                 break;
             default:
                 throw new UnsupportedOperationException(operation.getType().name());
@@ -137,7 +168,6 @@ public class OperationsServiceImpl implements OperationsService {
             position.setAmount(position.getAmount() + operation.getAmount());
             // calc new accounting price
             Map<BigDecimal, Integer> priceAmountMap = new HashMap<>();
-            priceAmountMap.put(operation.getPrice(), operation.getAmount());
             portfolio.getOperations().stream()
                     .filter(Operation::getProcessed)
                     .filter(op -> !op.getDeleted())
@@ -151,7 +181,8 @@ public class OperationsServiceImpl implements OperationsService {
                     .map(entry -> entry.getKey().multiply(BigDecimal.valueOf(entry.getValue())))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             var count = BigDecimal.valueOf(priceAmountMap.values().stream().reduce(0, Integer::sum));
-            position.setAccountingPrice(priceAmountMultiplicationSum.divide(count));
+            position.setAccountingPrice(priceAmountMultiplicationSum.divide(count,
+                    applicationConfig.getBigdecimalOperationsScale(), RoundingMode.FLOOR));
         } else {
             // add new position: operation price === accounting price
             var newPosition = new InstrumentPosition();
@@ -161,5 +192,18 @@ public class OperationsServiceImpl implements OperationsService {
             newPosition.setAccountingPrice(operation.getPrice());
             portfolio.getPositions().add(newPosition);
         }
+    }
+
+    private void updateInstrumentPositionOnSell(Operation operation) {
+        var portfolio = operation.getPortfolio();
+        var currentPosition = portfolio.getPositions().stream()
+                .filter(instrumentPosition -> instrumentPosition.getInstrument().equals(operation.getInstrument()))
+                .findFirst()
+                .orElseThrow(() -> new InstrumentPositionNotFoundException(portfolio.getName(),
+                        operation.getInstrument().getSymbol()));
+
+        currentPosition.setAmount(currentPosition.getAmount() - operation.getAmount());
+        // todo need to recalc accounting price or not???
+
     }
 }

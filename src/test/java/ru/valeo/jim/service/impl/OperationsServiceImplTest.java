@@ -7,7 +7,10 @@ import ru.valeo.jim.dto.InstrumentDto;
 import ru.valeo.jim.dto.PortfolioDto;
 import ru.valeo.jim.dto.operation.AddMoneyDto;
 import ru.valeo.jim.dto.operation.BuyInstrumentDto;
+import ru.valeo.jim.dto.operation.SellInstrumentDto;
 import ru.valeo.jim.dto.operation.WithdrawMoneyDto;
+import ru.valeo.jim.exception.InstrumentNotFoundException;
+import ru.valeo.jim.exception.InsufficientAmountException;
 import ru.valeo.jim.exception.InsufficientMoneyException;
 import ru.valeo.jim.exception.PortfolioNotFoundException;
 import ru.valeo.jim.service.InstrumentsService;
@@ -88,7 +91,7 @@ class OperationsServiceImplTest {
     }
 
     @Test
-    void whenPortfolioExistsAndHasSufficientMoney_shouldBuyInstrument() {
+    void whenPortfolioAndInstrumentExistsAndHasSufficientMoney_shouldBuyInstrument() {
         // create test portfolio with sufficient money
         var portfolioDto = createTestPortfolioDto();
         portfolioService.save(portfolioDto);
@@ -118,9 +121,82 @@ class OperationsServiceImplTest {
         assertEquals(new BigDecimal("55"), reloadedPortfolioDto.get().getAvailableMoney());
         assertFalse(positions.isEmpty());
         assertTrue(positions.stream()
-                .filter(instrumentPositionDto -> instrumentPositionDto.getSymbol().equals(instrumentDto.getSymbol()))
+                .filter(instrumentPositionDto -> instrumentPositionDto.getSymbol().equals(operationDto.getSymbol()))
                 .filter(instrumentPositionDto -> instrumentPositionDto.getAmount().equals(operationDto.getAmount()))
                 .anyMatch(instrumentPositionDto -> instrumentPositionDto.getAccountingPrice().equals(operationDto.getPrice())));
+    }
+
+    @Test
+    void whenPortfolioExistsButInstrumentNotExists_shouldThrowException() {
+        var portfolioDto = createTestPortfolioDto();
+        portfolioService.save(portfolioDto);
+
+        assertThrows(InstrumentNotFoundException.class,
+                () -> operationsService.buyInstrument(BuyInstrumentDto.builder()
+                        .portfolioName(portfolioDto.getName())
+                        .symbol("X")
+                        .amount(3)
+                        .price(new BigDecimal("15"))
+                        .build()));
+        assertThrows(InstrumentNotFoundException.class,
+                () -> operationsService.sellInstrument(SellInstrumentDto.builder()
+                        .portfolioName(portfolioDto.getName())
+                        .symbol("X")
+                        .amount(3)
+                        .price(new BigDecimal("15"))
+                        .build()));
+    }
+
+    @Test
+    void whenBuyAndSellOperationsPerformed_shouldHaveCorrectAccountingPrice() {
+        // create test portfolio with sufficient money
+        var portfolioDto = createTestPortfolioDto();
+        portfolioService.save(portfolioDto);
+        var addMoneyDto = operationsService.addMoney(AddMoneyDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .value(new BigDecimal("1000"))
+                .build());
+        // create test instrument
+        var instrumentDto = createInstrumentDto();
+        instrumentsService.save(instrumentDto);
+
+        var firstBuyOperation = operationsService.buyInstrument(BuyInstrumentDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .symbol(instrumentDto.getSymbol())
+                .amount(3)
+                .price(new BigDecimal("15"))
+                .build());
+        assertThrows(InsufficientAmountException.class,
+                () -> operationsService.sellInstrument(SellInstrumentDto.builder()
+                        .portfolioName(portfolioDto.getName())
+                        .symbol(instrumentDto.getSymbol())
+                        .amount(10)
+                        .price(new BigDecimal("15"))
+                        .build()));
+
+        var secondBuyOperation = operationsService.buyInstrument(BuyInstrumentDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .symbol(instrumentDto.getSymbol())
+                .amount(5)
+                .price(new BigDecimal("20"))
+                .build());
+        var reloadedPortfolioDto = portfolioService.getPortfolio(portfolioDto.getName());
+        var positions = portfolioService.getInstrumentPositions(portfolioDto.getName());
+
+        assertTrue(reloadedPortfolioDto.isPresent());
+        assertEquals(addMoneyDto.getValue().subtract(firstBuyOperation.getTotalPrice())
+                .subtract(secondBuyOperation.getTotalPrice()),
+                reloadedPortfolioDto.get().getAvailableMoney());
+        assertFalse(positions.isEmpty());
+        assertTrue(positions.stream()
+                .filter(instrumentPositionDto -> instrumentPositionDto.getSymbol().equals(firstBuyOperation.getSymbol()))
+                .filter(instrumentPositionDto -> instrumentPositionDto.getAmount()
+                        .equals(firstBuyOperation.getAmount() + secondBuyOperation.getAmount()))
+                .anyMatch(instrumentPositionDto -> instrumentPositionDto.getAccountingPrice()
+                        .equals(new BigDecimal("18.125"))));
+
+        // todo process sell operations
+
     }
 
     @Test
@@ -138,6 +214,13 @@ class OperationsServiceImplTest {
                         .build()));
         assertThrows(PortfolioNotFoundException.class,
                 () -> operationsService.buyInstrument(BuyInstrumentDto.builder()
+                        .portfolioName(notExistsPortfolioName)
+                        .symbol("X")
+                        .amount(3)
+                        .price(new BigDecimal("15"))
+                        .build()));
+        assertThrows(PortfolioNotFoundException.class,
+                () -> operationsService.sellInstrument(SellInstrumentDto.builder()
                         .portfolioName(notExistsPortfolioName)
                         .symbol("X")
                         .amount(3)

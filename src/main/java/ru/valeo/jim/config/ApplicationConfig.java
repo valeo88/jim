@@ -7,4 +7,5 @@ import org.springframework.stereotype.Component;
 @Component
 public class ApplicationConfig {
     private String defaultPortfolioName;
+    private int bigdecimalOperationsScale = 3;
 }
