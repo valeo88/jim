@@ -20,8 +20,7 @@ import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import static java.util.Optional.ofNullable;
 
@@ -165,24 +164,9 @@ public class OperationsServiceImpl implements OperationsService {
         if (currentPosition.isPresent()) {
             // update existing: need to recalc accounting price
             var position = currentPosition.get();
-            position.setAmount(position.getAmount() + operation.getAmount());
-            // calc new accounting price
-            Map<BigDecimal, Integer> priceAmountMap = new HashMap<>();
-            portfolio.getOperations().stream()
-                    .filter(Operation::getProcessed)
-                    .filter(op -> !op.getDeleted())
-                    .filter(op -> op.getType() == OperationType.BUY)
-                    .filter(op -> op.getInstrument().equals(operation.getInstrument()))
-                    .forEach(op -> {
-                        priceAmountMap.compute(op.getPrice(),
-                                (price, amount) -> amount == null ? op.getAmount() : amount + op.getAmount());
-                    });
-            var priceAmountMultiplicationSum = priceAmountMap.entrySet().stream()
-                    .map(entry -> entry.getKey().multiply(BigDecimal.valueOf(entry.getValue())))
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            var count = BigDecimal.valueOf(priceAmountMap.values().stream().reduce(0, Integer::sum));
-            position.setAccountingPrice(priceAmountMultiplicationSum.divide(count,
-                    applicationConfig.getBigdecimalOperationsScale(), RoundingMode.FLOOR));
+            final var newAmount = position.getAmount() + operation.getAmount();
+            position.setAmount(newAmount);
+            position.setAccountingPrice(calcAccountingPrice(operation.getInstrument(), portfolio.getOperations(), newAmount));
         } else {
             // add new position: operation price === accounting price
             var newPosition = new InstrumentPosition();
@@ -196,14 +180,35 @@ public class OperationsServiceImpl implements OperationsService {
 
     private void updateInstrumentPositionOnSell(Operation operation) {
         var portfolio = operation.getPortfolio();
-        var currentPosition = portfolio.getPositions().stream()
+        var position = portfolio.getPositions().stream()
                 .filter(instrumentPosition -> instrumentPosition.getInstrument().equals(operation.getInstrument()))
                 .findFirst()
                 .orElseThrow(() -> new InstrumentPositionNotFoundException(portfolio.getName(),
                         operation.getInstrument().getSymbol()));
 
-        currentPosition.setAmount(currentPosition.getAmount() - operation.getAmount());
-        // todo need to recalc accounting price or not???
+        final var newAmount = position.getAmount() - operation.getAmount();
+        position.setAmount(newAmount);
+        position.setAccountingPrice(calcAccountingPrice(operation.getInstrument(), portfolio.getOperations(), newAmount));
+    }
 
+    /** Calc accounting price based on total values and current amount. */
+    private BigDecimal calcAccountingPrice(Instrument instrument, List<Operation> operations, Integer currentAmount) {
+        // calc new accounting price
+        BigDecimal buyOperationsTotalValue = operations.stream()
+                .filter(Operation::getProcessed)
+                .filter(op -> !op.getDeleted())
+                .filter(op -> op.getType() == OperationType.BUY)
+                .filter(op -> op.getInstrument().equals(instrument))
+                .map(Operation::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal sellOperationsTotalValue = operations.stream()
+                .filter(Operation::getProcessed)
+                .filter(op -> !op.getDeleted())
+                .filter(op -> op.getType() == OperationType.SELL)
+                .filter(op -> op.getInstrument().equals(instrument))
+                .map(Operation::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return buyOperationsTotalValue.subtract(sellOperationsTotalValue)
+                .divide(BigDecimal.valueOf(currentAmount), applicationConfig.getBigdecimalOperationsScale(), RoundingMode.FLOOR);
     }
 }
