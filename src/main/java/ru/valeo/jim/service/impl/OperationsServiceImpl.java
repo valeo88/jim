@@ -188,7 +188,8 @@ public class OperationsServiceImpl implements OperationsService {
 
         final var newAmount = position.getAmount() - operation.getAmount();
         position.setAmount(newAmount);
-        position.setAccountingPrice(calcAccountingPrice(operation.getInstrument(), portfolio.getOperations(), newAmount));
+        position.setAccountingPrice(newAmount > 0 ? calcAccountingPrice(operation.getInstrument(), portfolio.getOperations(), newAmount)
+                : BigDecimal.ZERO);
     }
 
     /** Calc accounting price based on total values and current amount. */

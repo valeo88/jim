@@ -166,6 +166,7 @@ class OperationsServiceImplTest {
                 .amount(3)
                 .price(new BigDecimal("15"))
                 .build());
+        // try sell more than have
         assertThrows(InsufficientAmountException.class,
                 () -> operationsService.sellInstrument(SellInstrumentDto.builder()
                         .portfolioName(portfolioDto.getName())
@@ -195,8 +196,53 @@ class OperationsServiceImplTest {
                 .anyMatch(instrumentPositionDto -> instrumentPositionDto.getAccountingPrice()
                         .equals(new BigDecimal("18.125"))));
 
-        // todo process sell operations
+        var firstSellOperation = operationsService.sellInstrument(SellInstrumentDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .symbol(instrumentDto.getSymbol())
+                .amount(3)
+                .price(new BigDecimal("25"))
+                .build());
+        reloadedPortfolioDto = portfolioService.getPortfolio(portfolioDto.getName());
+        positions = portfolioService.getInstrumentPositions(portfolioDto.getName());
 
+        assertTrue(reloadedPortfolioDto.isPresent());
+        assertEquals(addMoneyDto.getValue().subtract(firstBuyOperation.getTotalPrice())
+                        .subtract(secondBuyOperation.getTotalPrice())
+                        .add(firstSellOperation.getTotalPrice()),
+                reloadedPortfolioDto.get().getAvailableMoney());
+        assertFalse(positions.isEmpty());
+        assertTrue(positions.stream()
+                .filter(instrumentPositionDto -> instrumentPositionDto.getSymbol().equals(firstBuyOperation.getSymbol()))
+                .filter(instrumentPositionDto -> instrumentPositionDto.getAmount()
+                        .equals(firstBuyOperation.getAmount() + secondBuyOperation.getAmount()
+                                - firstSellOperation.getAmount()))
+                .anyMatch(instrumentPositionDto -> instrumentPositionDto.getAccountingPrice()
+                        .equals(new BigDecimal("14.000"))));
+
+        // sell all available amount of instrument
+        var secondSellOperation = operationsService.sellInstrument(SellInstrumentDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .symbol(instrumentDto.getSymbol())
+                .amount(5)
+                .price(new BigDecimal("22"))
+                .build());
+        reloadedPortfolioDto = portfolioService.getPortfolio(portfolioDto.getName());
+        positions = portfolioService.getInstrumentPositions(portfolioDto.getName());
+
+        assertTrue(reloadedPortfolioDto.isPresent());
+        assertEquals(addMoneyDto.getValue().subtract(firstBuyOperation.getTotalPrice())
+                        .subtract(secondBuyOperation.getTotalPrice())
+                        .add(firstSellOperation.getTotalPrice())
+                        .add(secondSellOperation.getTotalPrice()),
+                reloadedPortfolioDto.get().getAvailableMoney());
+        assertFalse(positions.isEmpty());
+        assertTrue(positions.stream()
+                .filter(instrumentPositionDto -> instrumentPositionDto.getSymbol().equals(firstBuyOperation.getSymbol()))
+                .filter(instrumentPositionDto -> instrumentPositionDto.getAmount()
+                        .equals(firstBuyOperation.getAmount() + secondBuyOperation.getAmount()
+                                - firstSellOperation.getAmount() - secondSellOperation.getAmount()))
+                .anyMatch(instrumentPositionDto -> instrumentPositionDto.getAccountingPrice()
+                        .equals(BigDecimal.ZERO)), "should have accounting price equals to ZERO");
     }
 
     @Test
