@@ -1,9 +1,6 @@
 package ru.valeo.jim.service;
 
-import ru.valeo.jim.dto.operation.AddMoneyDto;
-import ru.valeo.jim.dto.operation.BuyInstrumentDto;
-import ru.valeo.jim.dto.operation.SellInstrumentDto;
-import ru.valeo.jim.dto.operation.WithdrawMoneyDto;
+import ru.valeo.jim.dto.operation.*;
 
 import javax.validation.constraints.NotNull;
 
@@ -21,4 +18,10 @@ public interface OperationsService {
 
     /** Sell instrument. */
     SellInstrumentDto sellInstrument(@NotNull SellInstrumentDto dto);
+
+    /** Add dividend. */
+    DividendDto dividend(@NotNull DividendDto dto);
+
+    /** Add coupon. */
+    CouponDto coupon(@NotNull CouponDto dto);
 }

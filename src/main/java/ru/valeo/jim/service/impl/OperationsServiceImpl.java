@@ -6,10 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.valeo.jim.config.ApplicationConfig;
 import ru.valeo.jim.domain.*;
-import ru.valeo.jim.dto.operation.AddMoneyDto;
-import ru.valeo.jim.dto.operation.BuyInstrumentDto;
-import ru.valeo.jim.dto.operation.SellInstrumentDto;
-import ru.valeo.jim.dto.operation.WithdrawMoneyDto;
+import ru.valeo.jim.dto.operation.*;
 import ru.valeo.jim.exception.*;
 import ru.valeo.jim.repository.InstrumentRepository;
 import ru.valeo.jim.repository.OperationRepository;
@@ -21,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 import static java.util.Optional.ofNullable;
 
@@ -107,6 +105,48 @@ public class OperationsServiceImpl implements OperationsService {
         return SellInstrumentDto.from(operation);
     }
 
+    @Transactional
+    @Override
+    public DividendDto dividend(@NotNull DividendDto dto) {
+        var portfolio = loadPortfolio(dto.getPortfolioName());
+        var instrument = loadInstrument(dto.getSymbol());
+        validateInstrumentType(instrument.getType(), InstrumentType.typesWithDividend());
+        checkIsAmountSufficient(portfolio, dto.getSymbol(), dto.getAmount());
+
+        var operation = new Operation();
+        operation.setType(OperationType.DIVIDEND);
+        operation.setInstrument(instrument);
+        operation.setPortfolio(portfolio);
+        operation.setPrice(dto.getPrice());
+        operation.setAmount(dto.getAmount());
+        operation.setWhenAdd(LocalDateTime.now());
+        operation = operationRepository.save(operation);
+
+        processOperation(operation);
+        return DividendDto.from(operation);
+    }
+
+    @Transactional
+    @Override
+    public CouponDto coupon(@NotNull CouponDto dto) {
+        var portfolio = loadPortfolio(dto.getPortfolioName());
+        var instrument = loadInstrument(dto.getSymbol());
+        validateInstrumentType(instrument.getType(), InstrumentType.typesWithCoupon());
+        checkIsAmountSufficient(portfolio, dto.getSymbol(), dto.getAmount());
+
+        var operation = new Operation();
+        operation.setType(OperationType.COUPON);
+        operation.setInstrument(instrument);
+        operation.setPortfolio(portfolio);
+        operation.setPrice(dto.getPrice());
+        operation.setAmount(dto.getAmount());
+        operation.setWhenAdd(LocalDateTime.now());
+        operation = operationRepository.save(operation);
+
+        processOperation(operation);
+        return CouponDto.from(operation);
+    }
+
     private Instrument loadInstrument(String symbol) {
         return instrumentRepository.findById(symbol)
                 .orElseThrow(() -> new InstrumentNotFoundException(symbol));
@@ -130,12 +170,19 @@ public class OperationsServiceImpl implements OperationsService {
             throw new InsufficientAmountException(portfolio.getName(), symbol);
     }
 
+    private void validateInstrumentType(InstrumentType type, Set<InstrumentType> availableTypes) {
+        if (!availableTypes.contains(type))
+            throw new UnsupportedInstrumentTypeException(type.name());
+    }
+
     /** Process operation. */
     private void processOperation(Operation operation) {
         operation.setProcessed(true);
         var portfolio = operation.getPortfolio();
         switch (operation.getType()) {
             case ADD_MONEY:
+            case DIVIDEND:
+            case COUPON:
                 portfolio.setAvailableMoney(portfolio.getAvailableMoney().add(operation.getTotalPrice()));
                 break;
             case WITHDRAW_MONEY:

@@ -3,16 +3,11 @@ package ru.valeo.jim.service.impl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import ru.valeo.jim.domain.InstrumentType;
 import ru.valeo.jim.dto.InstrumentDto;
 import ru.valeo.jim.dto.PortfolioDto;
-import ru.valeo.jim.dto.operation.AddMoneyDto;
-import ru.valeo.jim.dto.operation.BuyInstrumentDto;
-import ru.valeo.jim.dto.operation.SellInstrumentDto;
-import ru.valeo.jim.dto.operation.WithdrawMoneyDto;
-import ru.valeo.jim.exception.InstrumentNotFoundException;
-import ru.valeo.jim.exception.InsufficientAmountException;
-import ru.valeo.jim.exception.InsufficientMoneyException;
-import ru.valeo.jim.exception.PortfolioNotFoundException;
+import ru.valeo.jim.dto.operation.*;
+import ru.valeo.jim.exception.*;
 import ru.valeo.jim.service.InstrumentsService;
 import ru.valeo.jim.service.PortfolioService;
 
@@ -127,27 +122,6 @@ class OperationsServiceImplTest {
     }
 
     @Test
-    void whenPortfolioExistsButInstrumentNotExists_shouldThrowException() {
-        var portfolioDto = createTestPortfolioDto();
-        portfolioService.save(portfolioDto);
-
-        assertThrows(InstrumentNotFoundException.class,
-                () -> operationsService.buyInstrument(BuyInstrumentDto.builder()
-                        .portfolioName(portfolioDto.getName())
-                        .symbol("X")
-                        .amount(3)
-                        .price(new BigDecimal("15"))
-                        .build()));
-        assertThrows(InstrumentNotFoundException.class,
-                () -> operationsService.sellInstrument(SellInstrumentDto.builder()
-                        .portfolioName(portfolioDto.getName())
-                        .symbol("X")
-                        .amount(3)
-                        .price(new BigDecimal("15"))
-                        .build()));
-    }
-
-    @Test
     void whenBuyAndSellOperationsPerformed_shouldHaveCorrectAccountingPrice() {
         // create test portfolio with sufficient money
         var portfolioDto = createTestPortfolioDto();
@@ -246,6 +220,123 @@ class OperationsServiceImplTest {
     }
 
     @Test
+    void testDividendOperation() {
+        // create test portfolio with sufficient money
+        var portfolioDto = createTestPortfolioDto();
+        portfolioService.save(portfolioDto);
+        var addMoneyDto = operationsService.addMoney(AddMoneyDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .value(new BigDecimal("1000"))
+                .build());
+        // create test share
+        var instrumentDto = createInstrumentDto();
+        instrumentDto.setType(InstrumentType.SHARE.name());
+        instrumentsService.save(instrumentDto);
+
+        var buyOperation = operationsService.buyInstrument(BuyInstrumentDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .symbol(instrumentDto.getSymbol())
+                .amount(3)
+                .price(new BigDecimal("15"))
+                .build());
+        var dividendOperation = operationsService.dividend(DividendDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .symbol(instrumentDto.getSymbol())
+                .amount(3)
+                .price(new BigDecimal("1.5"))
+                .build());
+        var reloadedPortfolioDto = portfolioService.getPortfolio(portfolioDto.getName());
+
+        assertTrue(reloadedPortfolioDto.isPresent());
+        assertEquals(addMoneyDto.getValue().subtract(buyOperation.getTotalPrice())
+                        .add(dividendOperation.getTotalPrice()),
+                reloadedPortfolioDto.get().getAvailableMoney());
+    }
+
+    @Test
+    void testCouponOperation() {
+        // create test portfolio with sufficient money
+        var portfolioDto = createTestPortfolioDto();
+        portfolioService.save(portfolioDto);
+        var addMoneyDto = operationsService.addMoney(AddMoneyDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .value(new BigDecimal("1000"))
+                .build());
+        // create test bond
+        var instrumentDto = createInstrumentDto();
+        instrumentDto.setType(InstrumentType.BOND.name());
+        instrumentsService.save(instrumentDto);
+
+        var buyOperation = operationsService.buyInstrument(BuyInstrumentDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .symbol(instrumentDto.getSymbol())
+                .amount(3)
+                .price(new BigDecimal("15"))
+                .build());
+        var couponOperation = operationsService.coupon(CouponDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .symbol(instrumentDto.getSymbol())
+                .amount(3)
+                .price(new BigDecimal("1.5"))
+                .build());
+        var reloadedPortfolioDto = portfolioService.getPortfolio(portfolioDto.getName());
+
+        assertTrue(reloadedPortfolioDto.isPresent());
+        assertEquals(addMoneyDto.getValue().subtract(buyOperation.getTotalPrice())
+                        .add(couponOperation.getTotalPrice()),
+                reloadedPortfolioDto.get().getAvailableMoney());
+    }
+
+    @Test
+    void whenOperationNotSupportedForInstrumentType_shouldThrowException() {
+        // create test portfolio with sufficient money
+        var portfolioDto = createTestPortfolioDto();
+        portfolioService.save(portfolioDto);
+        var addMoneyDto = operationsService.addMoney(AddMoneyDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .value(new BigDecimal("1000"))
+                .build());
+        // create test bond
+        var bondDto = createInstrumentDto();
+        bondDto.setSymbol("BOND_1");
+        bondDto.setType(InstrumentType.BOND.name());
+        instrumentsService.save(bondDto);
+        // create test share
+        var shareDto = createInstrumentDto();
+        shareDto.setSymbol("SHARE_1");
+        shareDto.setType(InstrumentType.SHARE.name());
+        instrumentsService.save(shareDto);
+
+        operationsService.buyInstrument(BuyInstrumentDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .symbol(bondDto.getSymbol())
+                .amount(10)
+                .price(new BigDecimal("15"))
+                .build());
+        operationsService.buyInstrument(BuyInstrumentDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .symbol(shareDto.getSymbol())
+                .amount(3)
+                .price(new BigDecimal("15"))
+                .build());
+
+        assertThrows(UnsupportedInstrumentTypeException.class,
+                () -> operationsService.dividend(DividendDto.builder()
+                        .portfolioName(portfolioDto.getName())
+                        .symbol(bondDto.getSymbol())
+                        .amount(3)
+                        .price(new BigDecimal("15"))
+                        .build()));
+        assertThrows(UnsupportedInstrumentTypeException.class,
+                () -> operationsService.coupon(CouponDto.builder()
+                        .portfolioName(portfolioDto.getName())
+                        .symbol(shareDto.getSymbol())
+                        .amount(3)
+                        .price(new BigDecimal("15"))
+                        .build()));
+    }
+
+    @Test
     void whenPortfolioNotExists_shouldThrowException() {
         var notExistsPortfolioName = "UNKNOWN";
         assertThrows(PortfolioNotFoundException.class,
@@ -272,7 +363,57 @@ class OperationsServiceImplTest {
                         .amount(3)
                         .price(new BigDecimal("15"))
                         .build()));
+        assertThrows(PortfolioNotFoundException.class,
+                () -> operationsService.coupon(CouponDto.builder()
+                        .portfolioName(notExistsPortfolioName)
+                        .symbol("X")
+                        .amount(3)
+                        .price(new BigDecimal("1.1"))
+                        .build()));
+        assertThrows(PortfolioNotFoundException.class,
+                () -> operationsService.dividend(DividendDto.builder()
+                        .portfolioName(notExistsPortfolioName)
+                        .symbol("X")
+                        .amount(3)
+                        .price(new BigDecimal("3"))
+                        .build()));
     }
+
+        @Test
+        void whenPortfolioExistsButInstrumentNotExists_shouldThrowException() {
+            var portfolioDto = createTestPortfolioDto();
+            portfolioService.save(portfolioDto);
+
+            assertThrows(InstrumentNotFoundException.class,
+                    () -> operationsService.buyInstrument(BuyInstrumentDto.builder()
+                            .portfolioName(portfolioDto.getName())
+                            .symbol("X")
+                            .amount(3)
+                            .price(new BigDecimal("15"))
+                            .build()));
+            assertThrows(InstrumentNotFoundException.class,
+                    () -> operationsService.sellInstrument(SellInstrumentDto.builder()
+                            .portfolioName(portfolioDto.getName())
+                            .symbol("X")
+                            .amount(3)
+                            .price(new BigDecimal("15"))
+                            .build()));
+            assertThrows(InstrumentNotFoundException.class,
+                    () -> operationsService.coupon(CouponDto.builder()
+                            .portfolioName(portfolioDto.getName())
+                            .symbol("X")
+                            .amount(3)
+                            .price(new BigDecimal("1.1"))
+                            .build()));
+            assertThrows(InstrumentNotFoundException.class,
+                    () -> operationsService.dividend(DividendDto.builder()
+                            .portfolioName(portfolioDto.getName())
+                            .symbol("X")
+                            .amount(3)
+                            .price(new BigDecimal("3"))
+                            .build()));
+
+        }
 
     private PortfolioDto createTestPortfolioDto() {
         var dto = new PortfolioDto();
