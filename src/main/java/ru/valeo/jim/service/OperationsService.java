@@ -24,4 +24,7 @@ public interface OperationsService {
 
     /** Add coupon. */
     CouponDto coupon(@NotNull CouponDto dto);
+
+    /** Tax applied to portfolio. */
+    TaxDto tax(@NotNull TaxDto dto);
 }

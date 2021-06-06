@@ -147,6 +147,24 @@ public class OperationsServiceImpl implements OperationsService {
         return CouponDto.from(operation);
     }
 
+    @Transactional
+    @Override
+    public TaxDto tax(@NotNull TaxDto dto) {
+        var portfolio = loadPortfolio(dto.getPortfolioName());
+        checkIsMoneySufficient(portfolio, dto.getValue());
+
+        var operation = new Operation();
+        operation.setAmount(1);
+        operation.setPortfolio(portfolio);
+        operation.setPrice(dto.getValue());
+        operation.setType(OperationType.TAX);
+        operation.setWhenAdd(LocalDateTime.now());
+        operation = operationRepository.save(operation);
+
+        processOperation(operation);
+        return TaxDto.from(operation);
+    }
+
     private Instrument loadInstrument(String symbol) {
         return instrumentRepository.findById(symbol)
                 .orElseThrow(() -> new InstrumentNotFoundException(symbol));
@@ -186,6 +204,7 @@ public class OperationsServiceImpl implements OperationsService {
                 portfolio.setAvailableMoney(portfolio.getAvailableMoney().add(operation.getTotalPrice()));
                 break;
             case WITHDRAW_MONEY:
+            case TAX:
                 portfolio.setAvailableMoney(portfolio.getAvailableMoney().subtract(operation.getTotalPrice()));
                 break;
             case BUY:

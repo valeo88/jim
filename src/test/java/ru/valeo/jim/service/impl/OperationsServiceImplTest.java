@@ -50,13 +50,19 @@ class OperationsServiceImplTest {
     void whenPortfolioExistsAndHasNotSufficientMoney_shouldThrowError() {
         var portfolioDto = createTestPortfolioDto();
         portfolioService.save(portfolioDto);
-        var incomeDto = WithdrawMoneyDto.builder()
+        var withdrawMoneyDto = WithdrawMoneyDto.builder()
                 .portfolioName(portfolioDto.getName())
                 .value(new BigDecimal("11.3"))
                 .build();
+        var taxDto = TaxDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .value(new BigDecimal("1"))
+                .build();
 
         assertThrows(InsufficientMoneyException.class,
-                () -> operationsService.withdrawMoney(incomeDto));
+                () -> operationsService.withdrawMoney(withdrawMoneyDto));
+        assertThrows(InsufficientMoneyException.class,
+                () -> operationsService.tax(taxDto));
     }
 
     @Test
@@ -288,6 +294,32 @@ class OperationsServiceImplTest {
     }
 
     @Test
+    void whenPortfolioExistsAndHasSufficientMoney_shouldApplyTax() {
+        var portfolioDto = createTestPortfolioDto();
+        portfolioService.save(portfolioDto);
+
+        var addMoneyDto = AddMoneyDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .value(new BigDecimal("101.5"))
+                .build();
+        var taxDto = TaxDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .value(new BigDecimal("11.3"))
+                .build();
+
+        operationsService.addMoney(addMoneyDto);
+        var operationDto = operationsService.tax(taxDto);
+        var reloadedPortfolioDto = portfolioService.getPortfolio(portfolioDto.getName());
+
+        assertEquals(portfolioDto.getName(), operationDto.getPortfolioName());
+        assertEquals(portfolioDto.getCurrencyCode(), operationDto.getCurrencyCode());
+        assertEquals(taxDto.getValue(), operationDto.getValue());
+        assertNotNull(operationDto.getWhenAdd());
+        assertTrue(reloadedPortfolioDto.isPresent());
+        assertEquals(addMoneyDto.getValue().subtract(taxDto.getValue()), reloadedPortfolioDto.get().getAvailableMoney());
+    }
+
+    @Test
     void whenOperationNotSupportedForInstrumentType_shouldThrowException() {
         // create test portfolio with sufficient money
         var portfolioDto = createTestPortfolioDto();
@@ -376,6 +408,11 @@ class OperationsServiceImplTest {
                         .symbol("X")
                         .amount(3)
                         .price(new BigDecimal("3"))
+                        .build()));
+        assertThrows(PortfolioNotFoundException.class,
+                () -> operationsService.tax(TaxDto.builder()
+                        .portfolioName(notExistsPortfolioName)
+                        .value(new BigDecimal("3"))
                         .build()));
     }
 
