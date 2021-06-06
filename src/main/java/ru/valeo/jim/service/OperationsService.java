@@ -27,4 +27,7 @@ public interface OperationsService {
 
     /** Tax applied to portfolio. */
     TaxDto tax(@NotNull TaxDto dto);
+
+    /** Bond redemption. */
+    BondRedemptionDto bondRedemption(@NotNull BondRedemptionDto dto);
 }

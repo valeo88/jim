@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.valeo.jim.domain.InstrumentType;
+import ru.valeo.jim.dto.BondDto;
 import ru.valeo.jim.dto.InstrumentDto;
 import ru.valeo.jim.dto.PortfolioDto;
 import ru.valeo.jim.dto.operation.*;
@@ -226,7 +227,7 @@ class OperationsServiceImplTest {
     }
 
     @Test
-    void testDividendOperation() {
+    void whenHasShareInPortfolio_shouldPerformDividendOperation() {
         // create test portfolio with sufficient money
         var portfolioDto = createTestPortfolioDto();
         portfolioService.save(portfolioDto);
@@ -260,7 +261,7 @@ class OperationsServiceImplTest {
     }
 
     @Test
-    void testCouponOperation() {
+    void whenHasBondInPortfolio_shouldPerformCouponOperation() {
         // create test portfolio with sufficient money
         var portfolioDto = createTestPortfolioDto();
         portfolioService.save(portfolioDto);
@@ -291,6 +292,43 @@ class OperationsServiceImplTest {
         assertEquals(addMoneyDto.getValue().subtract(buyOperation.getTotalPrice())
                         .add(couponOperation.getTotalPrice()),
                 reloadedPortfolioDto.get().getAvailableMoney());
+    }
+
+    @Test
+    void whenHasBondInPortfolio_shouldPerformBondRedemptionOperation() {
+        // create test portfolio with sufficient money
+        var portfolioDto = createTestPortfolioDto();
+        portfolioService.save(portfolioDto);
+        var addMoneyDto = operationsService.addMoney(AddMoneyDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .value(new BigDecimal("1000"))
+                .build());
+        // create test bond
+        var bondDto = createBondDto();
+        instrumentsService.save(bondDto);
+
+        var buyOperation = operationsService.buyInstrument(BuyInstrumentDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .symbol(bondDto.getSymbol())
+                .amount(3)
+                .price(new BigDecimal("11"))
+                .build());
+        var bondRedemptionOperation = operationsService.bondRedemption(BondRedemptionDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .symbol(bondDto.getSymbol())
+                .build());
+        var reloadedPortfolioDto = portfolioService.getPortfolio(portfolioDto.getName());
+        var positions = portfolioService.getInstrumentPositions(portfolioDto.getName());
+
+        assertTrue(reloadedPortfolioDto.isPresent());
+        assertEquals(addMoneyDto.getValue().subtract(buyOperation.getTotalPrice())
+                        .add(bondRedemptionOperation.getTotalPrice()),
+                reloadedPortfolioDto.get().getAvailableMoney());
+        assertTrue(positions.stream()
+                .filter(instrumentPositionDto -> instrumentPositionDto.getSymbol().equals(bondDto.getSymbol()))
+                .filter(instrumentPositionDto -> instrumentPositionDto.getAmount().equals(0))
+                .anyMatch(instrumentPositionDto -> instrumentPositionDto.getAccountingPrice()
+                        .equals(BigDecimal.ZERO)), "should have accounting price equals to ZERO");
     }
 
     @Test
@@ -366,6 +404,11 @@ class OperationsServiceImplTest {
                         .amount(3)
                         .price(new BigDecimal("15"))
                         .build()));
+        assertThrows(UnsupportedInstrumentTypeException.class,
+                () -> operationsService.bondRedemption(BondRedemptionDto.builder()
+                        .portfolioName(portfolioDto.getName())
+                        .symbol(shareDto.getSymbol())
+                        .build()));
     }
 
     @Test
@@ -414,6 +457,11 @@ class OperationsServiceImplTest {
                         .portfolioName(notExistsPortfolioName)
                         .value(new BigDecimal("3"))
                         .build()));
+        assertThrows(PortfolioNotFoundException.class,
+                () -> operationsService.bondRedemption(BondRedemptionDto.builder()
+                        .portfolioName(notExistsPortfolioName)
+                        .symbol("X")
+                        .build()));
     }
 
         @Test
@@ -449,6 +497,11 @@ class OperationsServiceImplTest {
                             .amount(3)
                             .price(new BigDecimal("3"))
                             .build()));
+            assertThrows(InstrumentNotFoundException.class,
+                    () -> operationsService.bondRedemption(BondRedemptionDto.builder()
+                            .portfolioName(portfolioDto.getName())
+                            .symbol("X")
+                            .build()));
 
         }
 
@@ -467,6 +520,17 @@ class OperationsServiceImplTest {
         dto.setType("SHARE");
         dto.setBaseCurrencyCode("USD");
         dto.setCategoryCode("SHR");
+        return dto;
+    }
+
+    private BondDto createBondDto() {
+        var dto = new BondDto();
+        dto.setSymbol("BND1");
+        dto.setName("X bond LLC");
+        dto.setType("BOND");
+        dto.setBaseCurrencyCode("USD");
+        dto.setCategoryCode("GOVB");
+        dto.setParValue(new BigDecimal("10.0"));
         return dto;
     }
 }

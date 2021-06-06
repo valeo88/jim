@@ -165,6 +165,30 @@ public class OperationsServiceImpl implements OperationsService {
         return TaxDto.from(operation);
     }
 
+    @Transactional
+    @Override
+    public BondRedemptionDto bondRedemption(@NotNull BondRedemptionDto dto) {
+        var portfolio = loadPortfolio(dto.getPortfolioName());
+        var instrument = loadInstrument(dto.getSymbol());
+        validateInstrumentType(instrument.getType(), InstrumentType.typesWithCoupon());
+        var instrumentPosition = portfolio.getPositions().stream()
+                .filter(position -> position.getInstrument().equals(instrument))
+                .findFirst()
+                .orElseThrow(() -> new InstrumentPositionNotFoundException(portfolio.getName(), dto.getSymbol()));
+
+        var operation = new Operation();
+        operation.setType(OperationType.BOND_REDEMPTION);
+        operation.setInstrument(instrument);
+        operation.setPortfolio(portfolio);
+        operation.setPrice(instrument.getBondParValue());
+        operation.setAmount(instrumentPosition.getAmount());
+        operation.setWhenAdd(LocalDateTime.now());
+        operation = operationRepository.save(operation);
+
+        processOperation(operation);
+        return BondRedemptionDto.from(operation);
+    }
+
     private Instrument loadInstrument(String symbol) {
         return instrumentRepository.findById(symbol)
                 .orElseThrow(() -> new InstrumentNotFoundException(symbol));
@@ -212,6 +236,7 @@ public class OperationsServiceImpl implements OperationsService {
                 updateInstrumentPositionOnBuy(operation);
                 break;
             case SELL:
+            case BOND_REDEMPTION:
                 portfolio.setAvailableMoney(portfolio.getAvailableMoney().add(operation.getTotalPrice()));
                 updateInstrumentPositionOnSell(operation);
                 break;
