@@ -2,6 +2,7 @@ package ru.valeo.jim.service;
 
 import ru.valeo.jim.dto.InstrumentPositionDto;
 import ru.valeo.jim.dto.PortfolioDto;
+import ru.valeo.jim.dto.operation.OperationDto;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -31,4 +32,7 @@ public interface PortfolioService {
 
     /** Get all instrument positions in portfolio. */
     List<InstrumentPositionDto> getInstrumentPositions(@NotBlank String portfolioName);
+
+    /** Get all processed operations in portfolio. */
+    List<OperationDto> getProcessedOperations(String portfolioName);
 }

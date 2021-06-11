@@ -9,12 +9,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Builder
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class WithdrawMoneyDto {
+public class WithdrawMoneyDto extends OperationDto {
 
     String portfolioName;
     String currencyCode;
@@ -34,6 +34,6 @@ public class WithdrawMoneyDto {
     public String toString() {
         return "Withdraw money operation: " +
                 "portfolioName: '" + portfolioName + '\'' +
-                ", amount: " + value + "" + currencyCode;
+                ", amount: " + value + " " + currencyCode;
     }
 }

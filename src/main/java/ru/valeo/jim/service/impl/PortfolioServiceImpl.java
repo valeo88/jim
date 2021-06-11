@@ -4,9 +4,11 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.valeo.jim.config.ApplicationConfig;
+import ru.valeo.jim.domain.Operation;
 import ru.valeo.jim.domain.Portfolio;
 import ru.valeo.jim.dto.InstrumentPositionDto;
 import ru.valeo.jim.dto.PortfolioDto;
+import ru.valeo.jim.dto.operation.*;
 import ru.valeo.jim.exception.CurrencyNotFoundException;
 import ru.valeo.jim.exception.PortfolioNotFoundException;
 import ru.valeo.jim.repository.CurrencyRepository;
@@ -15,6 +17,7 @@ import ru.valeo.jim.service.PortfolioService;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -94,5 +97,42 @@ public class PortfolioServiceImpl implements PortfolioService {
                 .map(positions -> positions.stream()
                         .map(InstrumentPositionDto::from).collect(Collectors.toList()))
                 .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<OperationDto> getProcessedOperations(String portfolioName) {
+        return portfolioRepository.findById(ofNullable(portfolioName)
+                .orElse(applicationConfig.getDefaultPortfolioName()))
+                .map(Portfolio::getOperations)
+                .map(operations -> operations.stream()
+                        .sorted(Comparator.comparing(Operation::getWhenAdd, Comparator.reverseOrder()))
+                        .map(PortfolioServiceImpl::mapOperation)
+                        .collect(Collectors.toList()))
+                .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
+    }
+
+    // todo may be create mapper class
+    private static OperationDto mapOperation(Operation operation) {
+        switch (operation.getType()) {
+            case ADD_MONEY:
+                return AddMoneyDto.from(operation);
+            case WITHDRAW_MONEY:
+                return WithdrawMoneyDto.from(operation);
+            case BUY:
+                return BuyInstrumentDto.from(operation);
+            case SELL:
+                return SellInstrumentDto.from(operation);
+            case COUPON:
+                return CouponDto.from(operation);
+            case DIVIDEND:
+                return DividendDto.from(operation);
+            case BOND_REDEMPTION:
+                return BondRedemptionDto.from(operation);
+            case TAX:
+                return TaxDto.from(operation);
+            default:
+                throw new UnsupportedOperationException(operation.getType().name());
+        }
     }
 }

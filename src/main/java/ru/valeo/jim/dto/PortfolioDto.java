@@ -33,7 +33,6 @@ public class PortfolioDto {
     public String toString() {
         return "Portfolio: " +
                 "name='" + name + '\'' +
-                ", baseCurrencyCode='" + currencyCode + '\'' +
-                ", availableMoney='" + availableMoney + '\'';
+                ", availableMoney=" + availableMoney + " " + currencyCode;
     }
 }

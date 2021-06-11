@@ -10,12 +10,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Builder
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CouponDto {
+public class CouponDto extends OperationDto {
 
     String portfolioName;
     @NotBlank String symbol;
@@ -44,7 +44,7 @@ public class CouponDto {
                 ", symbol='" + symbol + '\'' +
                 ", name='" + name + '\'' +
                 ", amount=" + amount +
-                ", price=" + price + "" + currencyCode;
+                ", price=" + price + " " + currencyCode;
     }
 
     public BigDecimal getTotalPrice() {

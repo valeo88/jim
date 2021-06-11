@@ -9,12 +9,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Builder
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaxDto {
+public class TaxDto extends OperationDto {
 
     String portfolioName;
     String currencyCode;
@@ -34,6 +34,6 @@ public class TaxDto {
     public String toString() {
         return "Tax operation: " +
                 "portfolioName: '" + portfolioName + '\'' +
-                ", amount: " + value + "" + currencyCode;
+                ", amount: " + value + " " + currencyCode;
     }
 }

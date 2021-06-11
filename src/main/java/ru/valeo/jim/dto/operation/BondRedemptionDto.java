@@ -8,12 +8,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Builder
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class BondRedemptionDto {
+public class BondRedemptionDto extends OperationDto {
 
     String portfolioName;
     @NotBlank String symbol;
@@ -39,7 +39,7 @@ public class BondRedemptionDto {
                 "portfolioName='" + portfolioName + '\'' +
                 ", symbol='" + symbol + '\'' +
                 ", name='" + name + '\'' +
-                ", total price=" + totalPrice + "" + currencyCode;
+                ", total price=" + totalPrice + " " + currencyCode;
     }
 
 }
