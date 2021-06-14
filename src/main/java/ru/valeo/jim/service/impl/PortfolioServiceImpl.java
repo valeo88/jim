@@ -91,8 +91,9 @@ public class PortfolioServiceImpl implements PortfolioService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<InstrumentPositionDto> getInstrumentPositions(@NotBlank String portfolioName) {
-        return portfolioRepository.findById(portfolioName)
+    public List<InstrumentPositionDto> getInstrumentPositions(String portfolioName) {
+        return portfolioRepository.findById(ofNullable(portfolioName)
+                .orElse(applicationConfig.getDefaultPortfolioName()))
                 .map(Portfolio::getPositions)
                 .map(positions -> positions.stream()
                         .map(InstrumentPositionDto::from).collect(Collectors.toList()))

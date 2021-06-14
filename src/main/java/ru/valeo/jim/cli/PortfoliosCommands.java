@@ -3,10 +3,14 @@ package ru.valeo.jim.cli;
 import lombok.AllArgsConstructor;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
+import org.springframework.shell.standard.ShellOption;
+import ru.valeo.jim.dto.InstrumentPositionDto;
 import ru.valeo.jim.dto.PortfolioDto;
 import ru.valeo.jim.service.PortfolioService;
 
 import java.util.stream.Collectors;
+
+import static org.springframework.shell.standard.ShellOption.NULL;
 
 @AllArgsConstructor
 @ShellComponent
@@ -57,5 +61,14 @@ public class PortfoliosCommands {
         return portfolioService.getDefault()
                 .map(PortfolioDto::toString)
                 .orElseGet(() -> "Default portfolio is not set!");
+    }
+
+    @ShellMethod(value = "Get instrument positions in portfolio", key = "instrument-positions")
+    public String instrumentPositions(@ShellOption(defaultValue = NULL) String name) {
+        return portfolioService.getInstrumentPositions(name)
+                .stream()
+                .filter(instrumentPositionDto -> instrumentPositionDto.getAmount() > 0)
+                .map(InstrumentPositionDto::toString)
+                .collect(Collectors.joining(System.lineSeparator()));
     }
 }
