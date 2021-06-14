@@ -4,8 +4,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
-import ru.valeo.jim.dto.operation.AddMoneyDto;
-import ru.valeo.jim.dto.operation.WithdrawMoneyDto;
+import ru.valeo.jim.dto.operation.*;
 import ru.valeo.jim.service.OperationsService;
 import ru.valeo.jim.service.PortfolioService;
 
@@ -56,5 +55,71 @@ public class OperationsCommands {
                 .value(amount)
                 .build();
         return operationsService.withdrawMoney(dto).toString();
+    }
+
+    @ShellMethod(value = "Buy instrument operation", key = "buy-instrument")
+    public String buyInstrument(String symbol, BigDecimal price, Integer amount,
+                           @ShellOption(defaultValue = NULL) String portfolioName) {
+        var dto = BuyInstrumentDto.builder()
+                .portfolioName(portfolioName)
+                .symbol(symbol)
+                .price(price)
+                .amount(amount)
+                .build();
+        return operationsService.buyInstrument(dto).toString();
+    }
+
+    @ShellMethod(value = "Sell instrument operation", key = "sell-instrument")
+    public String sellInstrument(String symbol, BigDecimal price, Integer amount,
+                                @ShellOption(defaultValue = NULL) String portfolioName) {
+        var dto = SellInstrumentDto.builder()
+                .portfolioName(portfolioName)
+                .symbol(symbol)
+                .price(price)
+                .amount(amount)
+                .build();
+        return operationsService.sellInstrument(dto).toString();
+    }
+
+    @ShellMethod(value = "Add dividend operation", key = "add-dividend")
+    public String addDividend(String symbol, BigDecimal price, Integer amount,
+                                 @ShellOption(defaultValue = NULL) String portfolioName) {
+        var dto = DividendDto.builder()
+                .portfolioName(portfolioName)
+                .symbol(symbol)
+                .price(price)
+                .amount(amount)
+                .build();
+        return operationsService.dividend(dto).toString();
+    }
+
+    @ShellMethod(value = "Add coupon redemption operation", key = "add-coupon")
+    public String addCoupon(String symbol, BigDecimal price, Integer amount,
+                              @ShellOption(defaultValue = NULL) String portfolioName) {
+        var dto = CouponDto.builder()
+                .portfolioName(portfolioName)
+                .symbol(symbol)
+                .price(price)
+                .amount(amount)
+                .build();
+        return operationsService.coupon(dto).toString();
+    }
+
+    @ShellMethod(value = "Tax operation", key = "tax")
+    public String tax(BigDecimal amount, @ShellOption(defaultValue = NULL) String portfolioName) {
+        var dto = TaxDto.builder()
+                .portfolioName(portfolioName)
+                .value(amount)
+                .build();
+        return operationsService.tax(dto).toString();
+    }
+
+    @ShellMethod(value = "Bond redemption operation", key = "bond-redemption")
+    public String bondRedemption(String symbol, @ShellOption(defaultValue = NULL) String portfolioName) {
+        var dto = BondRedemptionDto.builder()
+                .portfolioName(portfolioName)
+                .symbol(symbol)
+                .build();
+        return operationsService.bondRedemption(dto).toString();
     }
 }
