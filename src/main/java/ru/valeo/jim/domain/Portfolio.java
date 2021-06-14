@@ -22,7 +22,7 @@ public class Portfolio {
     @Column(name = "available_money")
     private BigDecimal availableMoney = BigDecimal.ZERO;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "portfolio")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "portfolio", orphanRemoval = true)
     private List<InstrumentPosition> positions;
 
     @OneToMany(mappedBy = "portfolio")

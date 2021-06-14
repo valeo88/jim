@@ -12,11 +12,13 @@ import ru.valeo.jim.dto.operation.*;
 import ru.valeo.jim.exception.CurrencyNotFoundException;
 import ru.valeo.jim.exception.PortfolioNotFoundException;
 import ru.valeo.jim.repository.CurrencyRepository;
+import ru.valeo.jim.repository.OperationRepository;
 import ru.valeo.jim.repository.PortfolioRepository;
 import ru.valeo.jim.service.PortfolioService;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +31,7 @@ import static java.util.Optional.ofNullable;
 public class PortfolioServiceImpl implements PortfolioService {
 
     private final PortfolioRepository portfolioRepository;
+    private final OperationRepository operationRepository;
     private final CurrencyRepository currencyRepository;
     private final ApplicationConfig applicationConfig;
 
@@ -111,6 +114,17 @@ public class PortfolioServiceImpl implements PortfolioService {
                         .map(PortfolioServiceImpl::mapOperation)
                         .collect(Collectors.toList()))
                 .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
+    }
+
+    @Transactional
+    @Override
+    public void reinit(@NotBlank String portfolioName) {
+        var portfolio = portfolioRepository.findById(portfolioName)
+                .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
+        operationRepository.deleteAll(portfolio.getOperations());
+        portfolio.getPositions().clear();
+        portfolio.setAvailableMoney(BigDecimal.ZERO);
+        portfolioRepository.save(portfolio);
     }
 
     // todo may be create mapper class

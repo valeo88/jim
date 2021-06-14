@@ -71,4 +71,14 @@ public class PortfoliosCommands {
                 .map(InstrumentPositionDto::toString)
                 .collect(Collectors.joining(System.lineSeparator()));
     }
+
+    @ShellMethod(value = "Reinit portfolio. All data in portfolio will be deleted!!!", key = "reinit-portfolio")
+    public String reinit(String name) {
+        try {
+            portfolioService.reinit(name);
+            return "Performed reinitilization on portfolio: " + name;
+        } catch (RuntimeException e) {
+            return e.getMessage();
+        }
+    }
 }

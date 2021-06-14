@@ -31,8 +31,14 @@ public interface PortfolioService {
     Optional<PortfolioDto> getDefault();
 
     /** Get all instrument positions in portfolio. */
-    List<InstrumentPositionDto> getInstrumentPositions(@NotBlank String portfolioName);
+    List<InstrumentPositionDto> getInstrumentPositions(String portfolioName);
 
     /** Get all processed operations in portfolio. */
     List<OperationDto> getProcessedOperations(String portfolioName);
+
+    /** Reinitialize portfolio:
+     * - delete all operations
+     * - delete all instrument positions
+     * - set available money to 0 */
+    void reinit(@NotBlank String portfolioName);
 }
