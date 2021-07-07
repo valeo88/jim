@@ -7,7 +7,6 @@ import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Builder
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
@@ -15,12 +14,20 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class BondRedemptionDto extends OperationDto {
 
-    String portfolioName;
     @NotBlank String symbol;
     String name;
     BigDecimal totalPrice;
-    LocalDateTime whenAdd;
     String currencyCode;
+
+    @Builder
+    public BondRedemptionDto(String portfolioName, LocalDateTime whenAdd, @NotBlank String symbol,
+                             String name, BigDecimal totalPrice, String currencyCode) {
+        super(portfolioName, whenAdd);
+        this.symbol = symbol;
+        this.name = name;
+        this.totalPrice = totalPrice;
+        this.currencyCode = currencyCode;
+    }
 
     public static BondRedemptionDto from(Operation operation) {
         var dto = new BondRedemptionDto();

@@ -40,7 +40,7 @@ public class OperationsServiceImpl implements OperationsService {
         operation.setPortfolio(portfolio);
         operation.setPrice(dto.getValue());
         operation.setType(OperationType.ADD_MONEY);
-        operation.setWhenAdd(LocalDateTime.now());
+        operation.setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -58,7 +58,7 @@ public class OperationsServiceImpl implements OperationsService {
         operation.setPortfolio(portfolio);
         operation.setPrice(dto.getValue());
         operation.setType(OperationType.WITHDRAW_MONEY);
-        operation.setWhenAdd(LocalDateTime.now());
+        operation.setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -78,7 +78,7 @@ public class OperationsServiceImpl implements OperationsService {
         operation.setPortfolio(portfolio);
         operation.setPrice(dto.getPrice());
         operation.setAmount(dto.getAmount());
-        operation.setWhenAdd(LocalDateTime.now());
+        operation.setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -98,7 +98,7 @@ public class OperationsServiceImpl implements OperationsService {
         operation.setPortfolio(portfolio);
         operation.setPrice(dto.getPrice());
         operation.setAmount(dto.getAmount());
-        operation.setWhenAdd(LocalDateTime.now());
+        operation.setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -119,7 +119,7 @@ public class OperationsServiceImpl implements OperationsService {
         operation.setPortfolio(portfolio);
         operation.setPrice(dto.getPrice());
         operation.setAmount(dto.getAmount());
-        operation.setWhenAdd(LocalDateTime.now());
+        operation.setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -140,7 +140,7 @@ public class OperationsServiceImpl implements OperationsService {
         operation.setPortfolio(portfolio);
         operation.setPrice(dto.getPrice());
         operation.setAmount(dto.getAmount());
-        operation.setWhenAdd(LocalDateTime.now());
+        operation.setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -158,7 +158,7 @@ public class OperationsServiceImpl implements OperationsService {
         operation.setPortfolio(portfolio);
         operation.setPrice(dto.getValue());
         operation.setType(OperationType.TAX);
-        operation.setWhenAdd(LocalDateTime.now());
+        operation.setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -182,7 +182,7 @@ public class OperationsServiceImpl implements OperationsService {
         operation.setPortfolio(portfolio);
         operation.setPrice(instrument.getBondParValue());
         operation.setAmount(instrumentPosition.getAmount());
-        operation.setWhenAdd(LocalDateTime.now());
+        operation.setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -302,5 +302,10 @@ public class OperationsServiceImpl implements OperationsService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return buyOperationsTotalValue.subtract(sellOperationsTotalValue)
                 .divide(BigDecimal.valueOf(currentAmount), applicationConfig.getBigdecimalOperationsScale(), RoundingMode.FLOOR);
+    }
+
+    /** Extract from DTO or get current LDT. */
+    private LocalDateTime getWhenAdd(OperationDto dto) {
+        return ofNullable(dto.getWhenAdd()).orElseGet(LocalDateTime::now);
     }
 }

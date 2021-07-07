@@ -12,3 +12,7 @@ liquibase:
   enabled: true
   change-log: classpath:db/changelog/db.changelog-master.yaml
   contexts: dev
+
+app:
+  bigdecimalOperationsScale: 3
+  operationWhenAddFormat: "yyyy-MM-dd HH:mm:ss"

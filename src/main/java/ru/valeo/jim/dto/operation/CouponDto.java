@@ -9,7 +9,6 @@ import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Builder
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
@@ -17,13 +16,23 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CouponDto extends OperationDto {
 
-    String portfolioName;
     @NotBlank String symbol;
     String name;
     @NotNull @Min(1) Integer amount;
     @NotNull @Min(0) BigDecimal price;
-    LocalDateTime whenAdd;
     String currencyCode;
+
+    @Builder
+    public CouponDto(String portfolioName, LocalDateTime whenAdd, @NotBlank String symbol,
+                     String name, @NotNull @Min(1) Integer amount, @NotNull @Min(0) BigDecimal price,
+                     String currencyCode) {
+        super(portfolioName, whenAdd);
+        this.symbol = symbol;
+        this.name = name;
+        this.amount = amount;
+        this.price = price;
+        this.currencyCode = currencyCode;
+    }
 
     public static CouponDto from(Operation operation) {
         var dto = new CouponDto();

@@ -8,7 +8,6 @@ import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Builder
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
@@ -16,10 +15,16 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class WithdrawMoneyDto extends OperationDto {
 
-    String portfolioName;
     String currencyCode;
-    LocalDateTime whenAdd;
     @NotNull @Min(0) BigDecimal value;
+
+    @Builder
+    public WithdrawMoneyDto(String portfolioName, LocalDateTime whenAdd, String currencyCode,
+                            @NotNull @Min(0) BigDecimal value) {
+        super(portfolioName, whenAdd);
+        this.currencyCode = currencyCode;
+        this.value = value;
+    }
 
     public static WithdrawMoneyDto from(Operation operation) {
         var dto = new WithdrawMoneyDto();
