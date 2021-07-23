@@ -10,6 +10,7 @@ import ru.valeo.jim.service.PortfolioService;
 
 import java.util.stream.Collectors;
 
+import static java.util.Optional.ofNullable;
 import static org.springframework.shell.standard.ShellOption.NULL;
 
 @AllArgsConstructor
@@ -63,13 +64,20 @@ public class PortfoliosCommands {
                 .orElseGet(() -> "Default portfolio is not set!");
     }
 
-    @ShellMethod(value = "Get instrument positions in portfolio", key = "instrument-positions")
-    public String instrumentPositions(@ShellOption(defaultValue = NULL) String name) {
-        return portfolioService.getInstrumentPositions(name)
+    @ShellMethod(value = "Get portfolio infog", key = "portfolio-info")
+    public String info(@ShellOption(defaultValue = NULL) String name) {
+        String portfolioInfo = ofNullable(name)
+                .flatMap(portfolioService::getPortfolio)
+                .map(PortfolioDto::toString)
+                .orElseGet(() -> portfolioService.getDefault()
+                            .map(PortfolioDto::toString)
+                        .orElseGet(() -> "Portfolio not found!"));
+        String instrumentPositions = portfolioService.getInstrumentPositions(name)
                 .stream()
                 .filter(instrumentPositionDto -> instrumentPositionDto.getAmount() > 0)
                 .map(InstrumentPositionDto::toString)
                 .collect(Collectors.joining(System.lineSeparator()));
+        return portfolioInfo + System.lineSeparator() + instrumentPositions;
     }
 
     @ShellMethod(value = "Reinit portfolio. All data in portfolio will be deleted!!!", key = "reinit-portfolio")

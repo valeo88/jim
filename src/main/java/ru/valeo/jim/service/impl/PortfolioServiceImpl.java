@@ -1,6 +1,7 @@
 package ru.valeo.jim.service.impl;
 
 import lombok.AllArgsConstructor;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.valeo.jim.config.ApplicationConfig;
@@ -94,9 +95,8 @@ public class PortfolioServiceImpl implements PortfolioService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<InstrumentPositionDto> getInstrumentPositions(String portfolioName) {
-        return portfolioRepository.findById(ofNullable(portfolioName)
-                .orElse(applicationConfig.getDefaultPortfolioName()))
+    public List<InstrumentPositionDto> getInstrumentPositions(@Nullable String portfolioName) {
+        return portfolioRepository.findById(getOrDefaultPortfolioName(portfolioName))
                 .map(Portfolio::getPositions)
                 .map(positions -> positions.stream()
                         .map(InstrumentPositionDto::from).collect(Collectors.toList()))
@@ -105,9 +105,8 @@ public class PortfolioServiceImpl implements PortfolioService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<OperationDto> getProcessedOperations(String portfolioName) {
-        return portfolioRepository.findById(ofNullable(portfolioName)
-                .orElse(applicationConfig.getDefaultPortfolioName()))
+    public List<OperationDto> getProcessedOperations(@Nullable String portfolioName) {
+        return portfolioRepository.findById(getOrDefaultPortfolioName(portfolioName))
                 .map(Portfolio::getOperations)
                 .map(operations -> operations.stream()
                         .sorted(Comparator.comparing(Operation::getWhenAdd, Comparator.reverseOrder()))
@@ -149,5 +148,10 @@ public class PortfolioServiceImpl implements PortfolioService {
             default:
                 throw new UnsupportedOperationException(operation.getType().name());
         }
+    }
+
+    private String getOrDefaultPortfolioName(@Nullable String name) {
+        return ofNullable(ofNullable(name).orElseGet(applicationConfig::getDefaultPortfolioName))
+                .orElseThrow(() -> new IllegalArgumentException("Portfolio name is null and default portfolio is not set!"));
     }
 }
