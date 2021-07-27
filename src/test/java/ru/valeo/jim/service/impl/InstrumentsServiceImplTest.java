@@ -50,7 +50,7 @@ class InstrumentsServiceImplTest {
 
     private InstrumentDto createTestDto() {
         var dto = new InstrumentDto();
-        dto.setSymbol("XXX");
+        dto.setSymbol("XXX1");
         dto.setName("X share LLC");
         dto.setType("SHARE");
         dto.setBaseCurrencyCode("USD");

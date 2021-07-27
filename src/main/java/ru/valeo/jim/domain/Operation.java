@@ -37,6 +37,16 @@ public class Operation {
     @Column(name = "price", nullable = false)
     private BigDecimal price = BigDecimal.ZERO;
 
+    /** Used for bonds. */
+    @Min(0)
+    @Column(name = "accumulated_coupon_income", nullable = false)
+    private BigDecimal accumulatedCouponIncome = BigDecimal.ZERO;
+
+    /** Used for bonds. */
+    @Min(0)
+    @Column(name = "percent", nullable = false)
+    private BigDecimal percent = BigDecimal.ZERO;
+
     @Column(name = "deleted", nullable = false)
     private Boolean deleted = false;
 

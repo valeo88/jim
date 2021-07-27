@@ -1,0 +1,20 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20210723-operation
+      author: valeo88
+      context: dev or test or prod
+      changes:
+        - addColumn:
+            tableName: operation
+            columns:
+              - column:
+                  name: accumulated_coupon_income
+                  type: decimal
+
+        - tagDatabase:
+            tag: 0.0.8
+      rollback:
+        - dropColumn:
+            columnName: accumulated_coupon_income
+            tableName: operation

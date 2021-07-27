@@ -3,6 +3,7 @@ package ru.valeo.jim.service.impl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import ru.valeo.jim.config.ApplicationConfig;
 import ru.valeo.jim.domain.InstrumentType;
 import ru.valeo.jim.dto.BondDto;
 import ru.valeo.jim.dto.InstrumentDto;
@@ -13,6 +14,7 @@ import ru.valeo.jim.service.InstrumentsService;
 import ru.valeo.jim.service.PortfolioService;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,6 +28,8 @@ class OperationsServiceImplTest {
     private PortfolioService portfolioService;
     @Autowired
     private InstrumentsService instrumentsService;
+    @Autowired
+    private ApplicationConfig applicationConfig;
 
     @Test
     void whenPortfolioExists_shouldAddMoney() {
@@ -270,27 +274,34 @@ class OperationsServiceImplTest {
                 .value(new BigDecimal("1000"))
                 .build());
         // create test bond
-        var instrumentDto = createInstrumentDto();
-        instrumentDto.setType(InstrumentType.BOND.name());
-        instrumentsService.save(instrumentDto);
+        var bondDto = createBondDto();
+        instrumentsService.save(bondDto);
 
-        var buyOperation = operationsService.buyInstrument(BuyInstrumentDto.builder()
+        var buyOperation = operationsService.buyBond(BuyBondDto.builder()
                 .portfolioName(portfolioDto.getName())
-                .symbol(instrumentDto.getSymbol())
+                .symbol(bondDto.getSymbol())
                 .amount(3)
-                .price(new BigDecimal("15"))
+                .percent(new BigDecimal("101.1"))
+                .accumulatedCouponIncome(new BigDecimal("3.2"))
                 .build());
         var couponOperation = operationsService.coupon(CouponDto.builder()
                 .portfolioName(portfolioDto.getName())
-                .symbol(instrumentDto.getSymbol())
+                .symbol(bondDto.getSymbol())
                 .amount(3)
                 .price(new BigDecimal("1.5"))
                 .build());
         var reloadedPortfolioDto = portfolioService.getPortfolio(portfolioDto.getName());
 
         assertTrue(reloadedPortfolioDto.isPresent());
-        assertEquals(addMoneyDto.getValue().subtract(buyOperation.getTotalPrice())
-                        .add(couponOperation.getTotalPrice()),
+        assertEquals(addMoneyDto.getValue()
+                        .subtract(buyOperation.getAccumulatedCouponIncome())
+                        .subtract(bondDto.getParValue()
+                                .multiply(BigDecimal.valueOf(buyOperation.getAmount()))
+                                .multiply(buyOperation.getPercent()
+                                        .divide(BigDecimal.valueOf(100), applicationConfig.getBigdecimalOperationsScale(),
+                                                RoundingMode.FLOOR)))
+                        .add(couponOperation.getTotalPrice())
+                        .setScale(applicationConfig.getBigdecimalOperationsScale(), RoundingMode.FLOOR),
                 reloadedPortfolioDto.get().getAvailableMoney());
     }
 
@@ -307,11 +318,12 @@ class OperationsServiceImplTest {
         var bondDto = createBondDto();
         instrumentsService.save(bondDto);
 
-        var buyOperation = operationsService.buyInstrument(BuyInstrumentDto.builder()
+        var buyOperation = operationsService.buyBond(BuyBondDto.builder()
                 .portfolioName(portfolioDto.getName())
                 .symbol(bondDto.getSymbol())
                 .amount(3)
-                .price(new BigDecimal("11"))
+                .percent(new BigDecimal("101.12"))
+                .accumulatedCouponIncome(new BigDecimal("3.2"))
                 .build());
         var bondRedemptionOperation = operationsService.bondRedemption(BondRedemptionDto.builder()
                 .portfolioName(portfolioDto.getName())
@@ -321,8 +333,14 @@ class OperationsServiceImplTest {
         var positions = portfolioService.getInstrumentPositions(portfolioDto.getName());
 
         assertTrue(reloadedPortfolioDto.isPresent());
-        assertEquals(addMoneyDto.getValue().subtract(buyOperation.getTotalPrice())
-                        .add(bondRedemptionOperation.getTotalPrice()),
+        assertEquals(addMoneyDto.getValue().subtract(buyOperation.getAccumulatedCouponIncome())
+                    .subtract(bondDto.getParValue()
+                            .multiply(BigDecimal.valueOf(buyOperation.getAmount()))
+                            .multiply(buyOperation.getPercent())
+                            .divide(BigDecimal.valueOf(100), applicationConfig.getBigdecimalOperationsScale(),
+                                    RoundingMode.FLOOR))
+                        .add(bondRedemptionOperation.getTotalPrice())
+                        .setScale(applicationConfig.getBigdecimalOperationsScale(), RoundingMode.FLOOR),
                 reloadedPortfolioDto.get().getAvailableMoney());
         assertTrue(positions.stream()
                 .filter(instrumentPositionDto -> instrumentPositionDto.getSymbol().equals(bondDto.getSymbol()))
@@ -367,7 +385,7 @@ class OperationsServiceImplTest {
                 .value(new BigDecimal("1000"))
                 .build());
         // create test bond
-        var bondDto = createInstrumentDto();
+        var bondDto = createBondDto();
         bondDto.setSymbol("BOND_1");
         bondDto.setType(InstrumentType.BOND.name());
         instrumentsService.save(bondDto);
@@ -377,11 +395,12 @@ class OperationsServiceImplTest {
         shareDto.setType(InstrumentType.SHARE.name());
         instrumentsService.save(shareDto);
 
-        operationsService.buyInstrument(BuyInstrumentDto.builder()
+        operationsService.buyBond(BuyBondDto.builder()
                 .portfolioName(portfolioDto.getName())
                 .symbol(bondDto.getSymbol())
                 .amount(10)
-                .price(new BigDecimal("15"))
+                .percent(new BigDecimal("99.1"))
+                .accumulatedCouponIncome(new BigDecimal("1"))
                 .build());
         operationsService.buyInstrument(BuyInstrumentDto.builder()
                 .portfolioName(portfolioDto.getName())
@@ -408,6 +427,13 @@ class OperationsServiceImplTest {
                 () -> operationsService.bondRedemption(BondRedemptionDto.builder()
                         .portfolioName(portfolioDto.getName())
                         .symbol(shareDto.getSymbol())
+                        .build()));
+        assertThrows(UnsupportedInstrumentTypeException.class,
+                () -> operationsService.buyInstrument(BuyInstrumentDto.builder()
+                        .portfolioName(portfolioDto.getName())
+                        .symbol(bondDto.getSymbol())
+                        .amount(10)
+                        .price(new BigDecimal("10"))
                         .build()));
     }
 

@@ -1,0 +1,20 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20210727-operation
+      author: valeo88
+      context: dev or test or prod
+      changes:
+        - addColumn:
+            tableName: operation
+            columns:
+              - column:
+                  name: percent
+                  type: decimal
+
+        - tagDatabase:
+            tag: 0.0.9
+      rollback:
+        - dropColumn:
+            columnName: percent
+            tableName: operation

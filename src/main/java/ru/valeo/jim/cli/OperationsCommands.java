@@ -82,6 +82,21 @@ public class OperationsCommands {
         return operationsService.buyInstrument(dto).toString();
     }
 
+    @ShellMethod(value = "Buy bond operation", key = "buy-bond")
+    public String buyBond(String symbol, BigDecimal percent, BigDecimal accumulatedCouponIncome, Integer amount,
+                                @ShellOption(defaultValue = NULL) String whenAdd,
+                                @ShellOption(defaultValue = NULL) String portfolioName) {
+        var dto = BuyBondDto.builder()
+                .portfolioName(portfolioName)
+                .symbol(symbol)
+                .percent(percent)
+                .accumulatedCouponIncome(accumulatedCouponIncome)
+                .amount(amount)
+                .whenAdd(parseWhenAdd(whenAdd))
+                .build();
+        return operationsService.buyBond(dto).toString();
+    }
+
     @ShellMethod(value = "Sell instrument operation", key = "sell-instrument")
     public String sellInstrument(String symbol, BigDecimal price, Integer amount,
                                  @ShellOption(defaultValue = NULL) String whenAdd,

@@ -16,6 +16,9 @@ public interface OperationsService {
     /** Buy instrument. */
     BuyInstrumentDto buyInstrument(@NotNull BuyInstrumentDto dto);
 
+    /** Buy bond. */
+    BuyBondDto buyBond(@NotNull BuyBondDto dto);
+
     /** Sell instrument. */
     SellInstrumentDto sellInstrument(@NotNull SellInstrumentDto dto);
 

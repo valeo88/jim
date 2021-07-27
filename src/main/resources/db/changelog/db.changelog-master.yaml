@@ -28,3 +28,11 @@ databaseChangeLog:
   - include:
       file: 20210516-operation.yaml
       relativeToChangelogFile: true
+
+  - include:
+      file: 20210723-operation.yaml
+      relativeToChangelogFile: true
+
+  - include:
+      file: 20210727-operation.yaml
+      relativeToChangelogFile: true

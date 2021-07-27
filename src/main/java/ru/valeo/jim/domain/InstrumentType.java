@@ -22,6 +22,10 @@ public enum InstrumentType {
         return Set.of(BOND);
     }
 
+    public static Set<InstrumentType> typesWithoutCoupon() {
+        return Set.of(SHARE, ETF);
+    }
+
     public static Set<InstrumentType> typesWithDividend() {
         return Set.of(SHARE);
     }
