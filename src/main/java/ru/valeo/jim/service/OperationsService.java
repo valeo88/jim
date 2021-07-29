@@ -22,6 +22,9 @@ public interface OperationsService {
     /** Sell instrument. */
     SellInstrumentDto sellInstrument(@NotNull SellInstrumentDto dto);
 
+    /** Sell bond. */
+    SellBondDto sellBond(@NotNull SellBondDto dto);
+
     /** Add dividend. */
     DividendDto dividend(@NotNull DividendDto dto);
 
