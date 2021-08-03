@@ -16,6 +16,7 @@ import static org.springframework.shell.standard.ShellOption.NULL;
 @AllArgsConstructor
 @ShellComponent
 public class PortfoliosCommands {
+    private static final String SEPARATOR = "\n===================================\n";
 
     private final PortfolioService portfolioService;
 
@@ -64,7 +65,7 @@ public class PortfoliosCommands {
                 .orElseGet(() -> "Default portfolio is not set!");
     }
 
-    @ShellMethod(value = "Get portfolio infog", key = "portfolio-info")
+    @ShellMethod(value = "Get portfolio info", key = "portfolio-info")
     public String info(@ShellOption(defaultValue = NULL) String name) {
         String portfolioInfo = ofNullable(name)
                 .flatMap(portfolioService::getPortfolio)
@@ -77,7 +78,11 @@ public class PortfoliosCommands {
                 .filter(instrumentPositionDto -> instrumentPositionDto.getAmount() > 0)
                 .map(InstrumentPositionDto::toString)
                 .collect(Collectors.joining(System.lineSeparator()));
-        return portfolioInfo + System.lineSeparator() + instrumentPositions;
+        String instrumentsDistributionByAccountingPrice = "Instruments distribution (accounting price):"
+                + System.lineSeparator() + portfolioService.getInstrumentsDistributionByAccoutingPrice(name).toString();
+        return portfolioInfo + SEPARATOR
+                + instrumentsDistributionByAccountingPrice + SEPARATOR
+                + instrumentPositions;
     }
 
     @ShellMethod(value = "Reinit portfolio. All data in portfolio will be deleted!!!", key = "reinit-portfolio")

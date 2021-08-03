@@ -3,6 +3,7 @@ package ru.valeo.jim.service;
 import org.springframework.lang.Nullable;
 import ru.valeo.jim.dto.InstrumentPositionDto;
 import ru.valeo.jim.dto.PortfolioDto;
+import ru.valeo.jim.dto.PortfolioInstrumentsDistributionDto;
 import ru.valeo.jim.dto.operation.OperationDto;
 
 import javax.validation.constraints.NotBlank;
@@ -36,6 +37,9 @@ public interface PortfolioService {
 
     /** Get all processed operations in portfolio. */
     List<OperationDto> getProcessedOperations(@Nullable String portfolioName);
+
+    /** Get instruments distribution in portfolio by accounting prices */
+    PortfolioInstrumentsDistributionDto getInstrumentsDistributionByAccoutingPrice(@Nullable String portfolioName);
 
     /** Reinitialize portfolio:
      * - delete all operations

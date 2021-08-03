@@ -9,6 +9,7 @@ import ru.valeo.jim.domain.Operation;
 import ru.valeo.jim.domain.Portfolio;
 import ru.valeo.jim.dto.InstrumentPositionDto;
 import ru.valeo.jim.dto.PortfolioDto;
+import ru.valeo.jim.dto.PortfolioInstrumentsDistributionDto;
 import ru.valeo.jim.dto.operation.*;
 import ru.valeo.jim.exception.CurrencyNotFoundException;
 import ru.valeo.jim.exception.PortfolioNotFoundException;
@@ -112,6 +113,16 @@ public class PortfolioServiceImpl implements PortfolioService {
                         .sorted(Comparator.comparing(Operation::getWhenAdd, Comparator.reverseOrder()))
                         .map(PortfolioServiceImpl::mapOperation)
                         .collect(Collectors.toList()))
+                .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public PortfolioInstrumentsDistributionDto getInstrumentsDistributionByAccoutingPrice(String portfolioName) {
+        return portfolioRepository.findById(getOrDefaultPortfolioName(portfolioName))
+                .map(Portfolio::getPositions)
+                .map(positions -> PortfolioInstrumentsDistributionDto.byAccountingPrice(positions,
+                        applicationConfig.getBigdecimalOperationsScale()))
                 .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
     }
 
