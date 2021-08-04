@@ -36,3 +36,7 @@ databaseChangeLog:
   - include:
       file: 20210727-operation.yaml
       relativeToChangelogFile: true
+
+  - include:
+      file: 20210804-instrument-price.yaml
+      relativeToChangelogFile: true

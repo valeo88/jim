@@ -1,0 +1,54 @@
+package ru.valeo.jim.service.impl;
+
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.valeo.jim.domain.InstrumentPrice;
+import ru.valeo.jim.dto.InstrumentPriceDto;
+import ru.valeo.jim.exception.InstrumentNotFoundException;
+import ru.valeo.jim.repository.InstrumentPriceRepository;
+import ru.valeo.jim.repository.InstrumentRepository;
+import ru.valeo.jim.service.InstrumentsPriceService;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.util.Objects.nonNull;
+
+@AllArgsConstructor
+@Service
+public class InstrumentsPriceServiceImpl implements InstrumentsPriceService {
+
+    private final InstrumentPriceRepository instrumentPriceRepository;
+    private final InstrumentRepository instrumentRepository;
+
+    @Transactional
+    @Override
+    public InstrumentPriceDto addPrice(@NotNull InstrumentPriceDto dto) {
+        var instrument = instrumentRepository.findById(dto.getSymbol())
+                .orElseThrow(() -> new InstrumentNotFoundException(dto.getSymbol()));
+        var data = new InstrumentPrice();
+        data.setInstrument(instrument);
+        data.setPrice(dto.getPrice());
+        data.setAccumulatedCouponIncome(dto.getAccumulatedCouponIncome());
+        data.setWhenAdd(nonNull(dto.getWhenAdd()) ? dto.getWhenAdd() : LocalDateTime.now());
+
+        return InstrumentPriceDto.from(instrumentPriceRepository.save(data));
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<InstrumentPriceDto> get(@NotBlank String symbol) {
+        var instrument = instrumentRepository.findById(symbol)
+                .orElseThrow(() -> new InstrumentNotFoundException(symbol));
+        return instrumentPriceRepository.findByInstrument(instrument)
+                .stream()
+                .map(InstrumentPriceDto::from)
+                .sorted(Comparator.comparing(InstrumentPriceDto::getWhenAdd))
+                .collect(Collectors.toList());
+    }
+}
