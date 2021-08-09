@@ -7,7 +7,10 @@ import org.springframework.shell.standard.ShellOption;
 import ru.valeo.jim.domain.InstrumentType;
 import ru.valeo.jim.dto.BondDto;
 import ru.valeo.jim.dto.InstrumentDto;
+import ru.valeo.jim.dto.InstrumentPriceDto;
+import ru.valeo.jim.service.InstrumentsPriceService;
 import ru.valeo.jim.service.InstrumentsService;
+import ru.valeo.jim.service.util.DateTimeHelper;
 
 import java.math.BigDecimal;
 import java.util.stream.Collectors;
@@ -19,6 +22,8 @@ import static org.springframework.shell.standard.ShellOption.NULL;
 public class InstrumentsCommands {
 
     private final InstrumentsService instrumentsService;
+    private final InstrumentsPriceService instrumentsPriceService;
+    private final DateTimeHelper dateTimeHelper;
 
     @ShellMethod(value = "Print all available financial instruments", key = "instruments")
     public String printInstruments() {
@@ -97,5 +102,27 @@ public class InstrumentsCommands {
             return "Deleted instrument with code " + symbol;
         }
         return "Not found instrument with code " + symbol;
+    }
+
+    @ShellMethod(value = "Add instrument price to log", key = "add-price")
+    public String addPrice(String symbol, String price, BigDecimal accumulatedCouponIncome,
+                           @ShellOption(defaultValue = NULL) String whenAdd) {
+        var dto = new InstrumentPriceDto();
+        dto.setSymbol(symbol);
+        if (price.endsWith("%")) {
+            dto.setPrice(new BigDecimal(price.substring(0, price.length()-1)));
+            dto.setPercent(true);
+        } else {
+            dto.setPrice(new BigDecimal(price));
+        }
+        dto.setAccumulatedCouponIncome(accumulatedCouponIncome);
+        dto.setWhenAdd(dateTimeHelper.parse(whenAdd));
+        return instrumentsPriceService.addPrice(dto).toString();
+    }
+
+    @ShellMethod(value = "Show price log by instrument", key = "price-log")
+    public String priceLog(String symbol) {
+        return instrumentsPriceService.get(symbol).stream().map(InstrumentPriceDto::toString)
+                .collect(Collectors.joining(System.lineSeparator()));
     }
 }

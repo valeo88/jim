@@ -4,18 +4,15 @@ import lombok.AllArgsConstructor;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
-import org.springframework.util.StringUtils;
-import ru.valeo.jim.config.ApplicationConfig;
 import ru.valeo.jim.dto.operation.*;
 import ru.valeo.jim.service.OperationsService;
 import ru.valeo.jim.service.PortfolioService;
+import ru.valeo.jim.service.util.DateTimeHelper;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.util.Optional.ofNullable;
 import static org.springframework.shell.standard.ShellOption.NULL;
 
 @AllArgsConstructor
@@ -25,15 +22,14 @@ public class OperationsCommands {
 
     private final OperationsService operationsService;
     private final PortfolioService portfolioService;
-    private final ApplicationConfig applicationConfig;
+    private final DateTimeHelper dateTimeHelper;
 
     @ShellMethod(value = "Log processed operations", key = "log-operations")
     public String logOperations(@ShellOption(defaultValue = NULL) String portfolioName) {
         var builder = new StringBuilder(LOG_FIRST_LINE);
         List<String> operations = portfolioService.getProcessedOperations(portfolioName)
                 .stream()
-                .map(dto -> dto.toString() + " on "
-                        + applicationConfig.getOperationWhenAddFormatter().format(dto.getWhenAdd()))
+                .map(dto -> dto.toString() + " on " + dateTimeHelper.ldtToString(dto.getWhenAdd()))
                 .collect(Collectors.toList());
         for (var i = 0; i < operations.size(); i++) {
             builder.append(System.lineSeparator());
@@ -50,7 +46,7 @@ public class OperationsCommands {
                            @ShellOption(defaultValue = NULL) String portfolioName) {
         var dto = AddMoneyDto.builder()
                 .portfolioName(portfolioName)
-                .whenAdd(parseWhenAdd(whenAdd))
+                .whenAdd(dateTimeHelper.parse(whenAdd))
                 .value(amount)
                 .build();
         return operationsService.addMoney(dto).toString();
@@ -62,7 +58,7 @@ public class OperationsCommands {
                                 @ShellOption(defaultValue = NULL) String portfolioName) {
         var dto = WithdrawMoneyDto.builder()
                 .portfolioName(portfolioName)
-                .whenAdd(parseWhenAdd(whenAdd))
+                .whenAdd(dateTimeHelper.parse(whenAdd))
                 .value(amount)
                 .build();
         return operationsService.withdrawMoney(dto).toString();
@@ -77,7 +73,7 @@ public class OperationsCommands {
                 .symbol(symbol)
                 .price(price)
                 .amount(amount)
-                .whenAdd(parseWhenAdd(whenAdd))
+                .whenAdd(dateTimeHelper.parse(whenAdd))
                 .build();
         return operationsService.buyInstrument(dto).toString();
     }
@@ -92,7 +88,7 @@ public class OperationsCommands {
                 .percent(percent)
                 .accumulatedCouponIncome(accumulatedCouponIncome)
                 .amount(amount)
-                .whenAdd(parseWhenAdd(whenAdd))
+                .whenAdd(dateTimeHelper.parse(whenAdd))
                 .build();
         return operationsService.buyBond(dto).toString();
     }
@@ -106,7 +102,7 @@ public class OperationsCommands {
                 .symbol(symbol)
                 .price(price)
                 .amount(amount)
-                .whenAdd(parseWhenAdd(whenAdd))
+                .whenAdd(dateTimeHelper.parse(whenAdd))
                 .build();
         return operationsService.sellInstrument(dto).toString();
     }
@@ -121,7 +117,7 @@ public class OperationsCommands {
                 .percent(percent)
                 .accumulatedCouponIncome(accumulatedCouponIncome)
                 .amount(amount)
-                .whenAdd(parseWhenAdd(whenAdd))
+                .whenAdd(dateTimeHelper.parse(whenAdd))
                 .build();
         return operationsService.sellBond(dto).toString();
     }
@@ -135,7 +131,7 @@ public class OperationsCommands {
                 .symbol(symbol)
                 .price(price)
                 .amount(amount)
-                .whenAdd(parseWhenAdd(whenAdd))
+                .whenAdd(dateTimeHelper.parse(whenAdd))
                 .build();
         return operationsService.dividend(dto).toString();
     }
@@ -149,7 +145,7 @@ public class OperationsCommands {
                 .symbol(symbol)
                 .price(price)
                 .amount(amount)
-                .whenAdd(parseWhenAdd(whenAdd))
+                .whenAdd(dateTimeHelper.parse(whenAdd))
                 .build();
         return operationsService.coupon(dto).toString();
     }
@@ -161,7 +157,7 @@ public class OperationsCommands {
         var dto = TaxDto.builder()
                 .portfolioName(portfolioName)
                 .value(amount)
-                .whenAdd(parseWhenAdd(whenAdd))
+                .whenAdd(dateTimeHelper.parse(whenAdd))
                 .build();
         return operationsService.tax(dto).toString();
     }
@@ -173,16 +169,11 @@ public class OperationsCommands {
         var dto = BondRedemptionDto.builder()
                 .portfolioName(portfolioName)
                 .symbol(symbol)
-                .whenAdd(parseWhenAdd(whenAdd))
+                .whenAdd(dateTimeHelper.parse(whenAdd))
                 .build();
         return operationsService.bondRedemption(dto).toString();
     }
 
 
-    private LocalDateTime parseWhenAdd(String whenAdd) {
-        return ofNullable(whenAdd)
-                .filter(StringUtils::hasText)
-                .map(text -> LocalDateTime.parse(text, applicationConfig.getOperationWhenAddFormatter()))
-                .orElse(null);
-    }
+    
 }

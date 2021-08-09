@@ -18,14 +18,15 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class InstrumentPriceDto {
 
-    @NotBlank protected String symbol;
-    @NotBlank protected String name;
-    protected String baseCurrencyCode;
-    protected String type;
-    protected String categoryCode;
-    @NotNull @Min(0) BigDecimal price;
-    @NotNull @Min(0) BigDecimal accumulatedCouponIncome = BigDecimal.ZERO;
-    LocalDateTime whenAdd;
+    @NotBlank private String symbol;
+    @NotBlank private String name;
+    private String baseCurrencyCode;
+    private String type;
+    private String categoryCode;
+    @NotNull @Min(0) private BigDecimal price;
+    @NotNull @Min(0) private BigDecimal accumulatedCouponIncome = BigDecimal.ZERO;
+    private LocalDateTime whenAdd;
+    private boolean isPercent = false;
 
     public static InstrumentPriceDto from(InstrumentPrice instrumentPrice) {
         var dto = new InstrumentPriceDto();
@@ -44,12 +45,11 @@ public class InstrumentPriceDto {
     @Override
     public String toString() {
         return "Instrument price: " +
-                "symbol='" + symbol + '\'' +
+                "date=" + whenAdd +
+                ", symbol='" + symbol + '\'' +
                 ", name='" + name + '\'' +
                 ", type='" + type + '\'' +
-                ", categoryCode='" + categoryCode + '\'' +
                 ", price=" + price + baseCurrencyCode +
-                ", accumulatedCouponIncome=" + accumulatedCouponIncome + baseCurrencyCode +
-                ", date=" + whenAdd;
+                ", accumulatedCouponIncome=" + accumulatedCouponIncome + baseCurrencyCode;
     }
 }
