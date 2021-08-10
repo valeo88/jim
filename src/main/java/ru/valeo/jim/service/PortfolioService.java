@@ -8,6 +8,7 @@ import ru.valeo.jim.dto.operation.OperationDto;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,6 +41,11 @@ public interface PortfolioService {
 
     /** Get instruments distribution in portfolio by accounting prices */
     PortfolioInstrumentsDistributionDto getInstrumentsDistributionByAccoutingPrice(@Nullable String portfolioName);
+
+    /** Get instruments distribution in portfolio by actual prices
+     * @param date - date for what actual prices will search*/
+    PortfolioInstrumentsDistributionDto getInstrumentsDistributionByActualPrice(@Nullable String portfolioName,
+                                                                                @Nullable LocalDateTime date);
 
     /** Reinitialize portfolio:
      * - delete all operations

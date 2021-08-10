@@ -13,8 +13,13 @@ public class ApplicationConfig {
     private String defaultPortfolioName;
     private int bigdecimalOperationsScale = 3;
     private String operationWhenAddFormat = "yyyy-MM-dd HH:mm:ss";
+    private String defaultDateFormat = "yyyy-MM-dd";
 
     public DateTimeFormatter getOperationWhenAddFormatter() {
         return DateTimeFormatter.ofPattern(operationWhenAddFormat);
+    }
+
+    public DateTimeFormatter getDefaultDateFormatter() {
+        return DateTimeFormatter.ofPattern(defaultDateFormat);
     }
 }

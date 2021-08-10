@@ -5,6 +5,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.valeo.jim.config.ApplicationConfig;
+import ru.valeo.jim.domain.Instrument;
+import ru.valeo.jim.domain.InstrumentPrice;
 import ru.valeo.jim.domain.Operation;
 import ru.valeo.jim.domain.Portfolio;
 import ru.valeo.jim.dto.InstrumentPositionDto;
@@ -14,6 +16,7 @@ import ru.valeo.jim.dto.operation.*;
 import ru.valeo.jim.exception.CurrencyNotFoundException;
 import ru.valeo.jim.exception.PortfolioNotFoundException;
 import ru.valeo.jim.repository.CurrencyRepository;
+import ru.valeo.jim.repository.InstrumentPriceRepository;
 import ru.valeo.jim.repository.OperationRepository;
 import ru.valeo.jim.repository.PortfolioRepository;
 import ru.valeo.jim.service.PortfolioService;
@@ -21,8 +24,10 @@ import ru.valeo.jim.service.PortfolioService;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -35,6 +40,7 @@ public class PortfolioServiceImpl implements PortfolioService {
     private final PortfolioRepository portfolioRepository;
     private final OperationRepository operationRepository;
     private final CurrencyRepository currencyRepository;
+    private final InstrumentPriceRepository instrumentPriceRepository;
     private final ApplicationConfig applicationConfig;
 
     @Transactional(readOnly = true)
@@ -123,6 +129,20 @@ public class PortfolioServiceImpl implements PortfolioService {
                 .map(Portfolio::getPositions)
                 .map(positions -> PortfolioInstrumentsDistributionDto.byAccountingPrice(positions,
                         applicationConfig.getBigdecimalOperationsScale()))
+                .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public PortfolioInstrumentsDistributionDto getInstrumentsDistributionByActualPrice(String portfolioName, LocalDateTime date) {
+        Map<Instrument, BigDecimal> actualPrices = instrumentPriceRepository
+                .findByWhenAddLessThanEqualOrderByWhenAddDesc(ofNullable(date).orElseGet(LocalDateTime::now))
+                .stream()
+                .collect(Collectors.toMap(InstrumentPrice::getInstrument, InstrumentPrice::getPrice, (a, b) -> a));
+        return portfolioRepository.findById(getOrDefaultPortfolioName(portfolioName))
+                .map(Portfolio::getPositions)
+                .map(positions -> PortfolioInstrumentsDistributionDto.byActualPrice(positions,
+                        actualPrices, applicationConfig.getBigdecimalOperationsScale()))
                 .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
     }
 

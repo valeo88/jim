@@ -7,6 +7,7 @@ import org.springframework.shell.standard.ShellOption;
 import ru.valeo.jim.dto.InstrumentPositionDto;
 import ru.valeo.jim.dto.PortfolioDto;
 import ru.valeo.jim.service.PortfolioService;
+import ru.valeo.jim.service.util.DateTimeHelper;
 
 import java.util.stream.Collectors;
 
@@ -19,6 +20,7 @@ public class PortfoliosCommands {
     private static final String SEPARATOR = "\n===================================\n";
 
     private final PortfolioService portfolioService;
+    private final DateTimeHelper dateTimeHelper;
 
     @ShellMethod(value = "Print all available portfolios", key = "portfolios")
     public String printPortfolios() {
@@ -66,7 +68,8 @@ public class PortfoliosCommands {
     }
 
     @ShellMethod(value = "Get portfolio info", key = "portfolio-info")
-    public String info(@ShellOption(defaultValue = NULL) String name) {
+    public String info(@ShellOption(defaultValue = NULL) String name,
+                       @ShellOption(defaultValue = NULL) String date) {
         String portfolioInfo = ofNullable(name)
                 .flatMap(portfolioService::getPortfolio)
                 .map(PortfolioDto::toString)
@@ -80,8 +83,12 @@ public class PortfoliosCommands {
                 .collect(Collectors.joining(System.lineSeparator()));
         String instrumentsDistributionByAccountingPrice = "Instruments distribution (accounting price):"
                 + System.lineSeparator() + portfolioService.getInstrumentsDistributionByAccoutingPrice(name).toString();
+        String instrumentsDistributionByActualPrice = "Instruments distribution (actual price, accounting if not found):"
+                + System.lineSeparator() + portfolioService.getInstrumentsDistributionByActualPrice(name,
+                dateTimeHelper.parse(date)).toString();
         return portfolioInfo + SEPARATOR
                 + instrumentsDistributionByAccountingPrice + SEPARATOR
+                + instrumentsDistributionByActualPrice + SEPARATOR
                 + instrumentPositions;
     }
 

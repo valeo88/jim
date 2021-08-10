@@ -6,6 +6,7 @@ import org.springframework.util.StringUtils;
 import ru.valeo.jim.config.ApplicationConfig;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 
 import static java.util.Optional.ofNullable;
 
@@ -18,7 +19,13 @@ public class DateTimeHelper {
     public LocalDateTime parse(String source) {
         return ofNullable(source)
                 .filter(StringUtils::hasText)
-                .map(text -> LocalDateTime.parse(text, applicationConfig.getOperationWhenAddFormatter()))
+                .map(text -> {
+                    try {
+                        return LocalDateTime.parse(text, applicationConfig.getOperationWhenAddFormatter());
+                    } catch (DateTimeParseException ignored) {
+                        return LocalDateTime.parse(text, applicationConfig.getDefaultDateFormatter());
+                    }
+                })
                 .orElse(null);
     }
 
