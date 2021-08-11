@@ -6,6 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.valeo.jim.config.ApplicationConfig;
 import ru.valeo.jim.dto.PortfolioDto;
 import ru.valeo.jim.exception.PortfolioNotFoundException;
+import ru.valeo.jim.exception.UnexpectedValueException;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -32,6 +33,24 @@ class PortfolioServiceImplTest {
         var saved = service.save(dto);
 
         assertTrue(service.getPortfolios().contains(saved));
+    }
+
+    @Test
+    void shouldSaveDtoWithCategoryDistributions() {
+        var dto = createTestDto();
+        dto.setCategoriesTargetDistribution("SHR-60,GOVB-40");
+
+        var saved = service.save(dto);
+
+        assertTrue(service.getPortfolios().contains(saved));
+    }
+
+    @Test
+    void shouldThrowErrorWithWrongCategoryDistributions() {
+        var dto = createTestDto();
+        dto.setCategoriesTargetDistribution("SHR-60,GOVB-10");
+
+        assertThrows(UnexpectedValueException.class, () -> service.save(dto));
     }
 
     @Test

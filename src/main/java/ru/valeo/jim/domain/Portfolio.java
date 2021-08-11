@@ -27,4 +27,7 @@ public class Portfolio {
 
     @OneToMany(mappedBy = "portfolio")
     private List<Operation> operations;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "portfolio")
+    private List<InstrumentCategoryTargetDistribution> categoryTargetDistributions;
 }

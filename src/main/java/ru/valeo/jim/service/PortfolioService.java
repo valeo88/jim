@@ -47,6 +47,9 @@ public interface PortfolioService {
     PortfolioInstrumentsDistributionDto getInstrumentsDistributionByActualPrice(@Nullable String portfolioName,
                                                                                 @Nullable LocalDateTime date);
 
+    /** Get target instruments distribution in portfolio. */
+    PortfolioInstrumentsDistributionDto getTargetInstrumentsDistribution(@Nullable String portfolioName);
+
     /** Reinitialize portfolio:
      * - delete all operations
      * - delete all instrument positions

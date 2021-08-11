@@ -40,3 +40,7 @@ databaseChangeLog:
   - include:
       file: 20210804-instrument-price.yaml
       relativeToChangelogFile: true
+
+  - include:
+      file: 20210811-instrument-category-target-distribution.yaml
+      relativeToChangelogFile: true

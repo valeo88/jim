@@ -30,11 +30,13 @@ public class PortfoliosCommands {
     }
 
     @ShellMethod(value = "Update portfolio or create if not exists", key = "save-portfolio")
-    public String save(String name, String currency) {
+    public String save(String name, String currency,
+                       @ShellOption(defaultValue = NULL, help = "Comma separated list: <Category code>-<percent>,...") String targetCategories) {
         try {
             var dto = new PortfolioDto();
             dto.setName(name);
             dto.setCurrencyCode(currency);
+            dto.setCategoriesTargetDistribution(targetCategories);
 
             return portfolioService.save(dto).toString();
         } catch (RuntimeException e) {
@@ -86,7 +88,10 @@ public class PortfoliosCommands {
         String instrumentsDistributionByActualPrice = "Instruments distribution (actual price, accounting if not found):"
                 + System.lineSeparator() + portfolioService.getInstrumentsDistributionByActualPrice(name,
                 dateTimeHelper.parse(date)).toString();
+        String targetInstrumentsDistribution = "Instruments distribution (target):"
+                + System.lineSeparator() + portfolioService.getTargetInstrumentsDistribution(name).toString();
         return portfolioInfo + SEPARATOR
+                + targetInstrumentsDistribution + SEPARATOR
                 + instrumentsDistributionByAccountingPrice + SEPARATOR
                 + instrumentsDistributionByActualPrice + SEPARATOR
                 + instrumentPositions;

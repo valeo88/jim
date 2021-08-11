@@ -4,9 +4,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.valeo.jim.domain.Instrument;
-import ru.valeo.jim.domain.InstrumentCategory;
-import ru.valeo.jim.domain.InstrumentPosition;
+import ru.valeo.jim.domain.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -61,6 +59,17 @@ public class PortfolioInstrumentsDistributionDto {
         for (var entry : dto.getPercentByCategory().entrySet()) {
             entry.setValue(entry.getValue().divide(sum, bigdecimalOperationsScale, RoundingMode.FLOOR).multiply(BigDecimal.valueOf(100L)));
         }
+        return dto;
+    }
+
+    public static PortfolioInstrumentsDistributionDto byTargetPercent(@NotNull Portfolio portfolio) {
+        var dto = new PortfolioInstrumentsDistributionDto();
+        dto.setPortfolioName(portfolio.getName());
+        dto.setPercentByCategory(ofNullable(portfolio.getCategoryTargetDistributions())
+                .orElseGet(Collections::emptyList)
+                .stream()
+                .collect(Collectors.toMap(InstrumentCategoryTargetDistribution::getCategory,
+                        InstrumentCategoryTargetDistribution::getPercent)));
         return dto;
     }
 

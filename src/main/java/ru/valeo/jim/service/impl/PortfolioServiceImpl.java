@@ -4,31 +4,25 @@ import lombok.AllArgsConstructor;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import ru.valeo.jim.config.ApplicationConfig;
-import ru.valeo.jim.domain.Instrument;
-import ru.valeo.jim.domain.InstrumentPrice;
-import ru.valeo.jim.domain.Operation;
-import ru.valeo.jim.domain.Portfolio;
+import ru.valeo.jim.domain.*;
 import ru.valeo.jim.dto.InstrumentPositionDto;
 import ru.valeo.jim.dto.PortfolioDto;
 import ru.valeo.jim.dto.PortfolioInstrumentsDistributionDto;
 import ru.valeo.jim.dto.operation.*;
 import ru.valeo.jim.exception.CurrencyNotFoundException;
+import ru.valeo.jim.exception.InstrumentCategoryNotFoundException;
 import ru.valeo.jim.exception.PortfolioNotFoundException;
-import ru.valeo.jim.repository.CurrencyRepository;
-import ru.valeo.jim.repository.InstrumentPriceRepository;
-import ru.valeo.jim.repository.OperationRepository;
-import ru.valeo.jim.repository.PortfolioRepository;
+import ru.valeo.jim.exception.UnexpectedValueException;
+import ru.valeo.jim.repository.*;
 import ru.valeo.jim.service.PortfolioService;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
@@ -41,6 +35,7 @@ public class PortfolioServiceImpl implements PortfolioService {
     private final OperationRepository operationRepository;
     private final CurrencyRepository currencyRepository;
     private final InstrumentPriceRepository instrumentPriceRepository;
+    private final InstrumentCategoryRepository instrumentCategoryRepository;
     private final ApplicationConfig applicationConfig;
 
     @Transactional(readOnly = true)
@@ -65,6 +60,19 @@ public class PortfolioServiceImpl implements PortfolioService {
         portfolio.setName(dto.getName());
         portfolio.setCurrency(currency);
         // don't set available money on save!
+        if (StringUtils.hasText(dto.getCategoriesTargetDistribution())) {
+            portfolio.setCategoryTargetDistributions(
+                    parseInstrumentCategoryDistribution(dto.getCategoriesTargetDistribution())
+                            .entrySet().stream().map(entry -> {
+                        var e = new InstrumentCategoryTargetDistribution();
+                        e.setPortfolio(portfolio);
+                        e.setCategory(entry.getKey());
+                        e.setPercent(entry.getValue());
+                        return e;
+                    }).collect(Collectors.toList())
+            );
+        }
+
 
         return PortfolioDto.fromPortfolio(portfolioRepository.save(portfolio));
     }
@@ -146,6 +154,14 @@ public class PortfolioServiceImpl implements PortfolioService {
                 .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public PortfolioInstrumentsDistributionDto getTargetInstrumentsDistribution(String portfolioName) {
+        return portfolioRepository.findById(getOrDefaultPortfolioName(portfolioName))
+                .map(PortfolioInstrumentsDistributionDto::byTargetPercent)
+                .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
+    }
+
     @Transactional
     @Override
     public void reinit(@NotBlank String portfolioName) {
@@ -184,5 +200,22 @@ public class PortfolioServiceImpl implements PortfolioService {
     private String getOrDefaultPortfolioName(@Nullable String name) {
         return ofNullable(ofNullable(name).orElseGet(applicationConfig::getDefaultPortfolioName))
                 .orElseThrow(() -> new IllegalArgumentException("Portfolio name is null and default portfolio is not set!"));
+    }
+
+    private Map<InstrumentCategory, BigDecimal> parseInstrumentCategoryDistribution(String value) {
+        var categoryCodeDistr = ofNullable(value)
+                .filter(StringUtils::hasText)
+                .map(d -> d.split(","))
+                .map(t -> Arrays.stream(t).map(m -> m.split("-"))
+                        .collect(Collectors.toMap(x -> instrumentCategoryRepository.findById(x[0])
+                                        .orElseThrow(() -> new InstrumentCategoryNotFoundException(x[0])),
+                                x -> new BigDecimal(x[1]))))
+                .orElseGet(Collections::emptyMap);
+        var categoriesSum = categoryCodeDistr.values().stream()
+                .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        if (categoriesSum.compareTo(BigDecimal.ZERO) > 0 && !categoriesSum.equals(new BigDecimal(100))) {
+            throw new UnexpectedValueException(new BigDecimal(100), categoriesSum);
+        }
+        return categoryCodeDistr;
     }
 }

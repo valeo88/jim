@@ -1,0 +1,69 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20210811-instrument-category-target-distribution
+      author: valeo88
+      context: dev or test or prod
+      changes:
+        - createTable:
+            tableName: instrument_category_target_distribution
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: portfolio_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category_id
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: percent
+                  type: decimal
+                  constraints:
+                    nullable: false
+
+        - addAutoIncrement:
+            columnDataType: int
+            columnName: id
+            defaultOnNull: false
+            generationType: ALWAYS
+            incrementBy: 1
+            startWith: 1
+            tableName: instrument_category_target_distribution
+
+        - addForeignKeyConstraint:
+            constraintName: fk_instrument_category_target_distr_portfolio
+            baseTableName: instrument_category_target_distribution
+            baseColumnNames: portfolio_id
+            referencedTableName: portfolio
+            referencedColumnNames: name
+            onDelete: CASCADE
+            onUpdate: CASCADE
+
+        - addForeignKeyConstraint:
+            constraintName: fk_instrument_category_target_distr_category
+            baseTableName: instrument_category_target_distribution
+            baseColumnNames: category_id
+            referencedTableName: instrument_category
+            referencedColumnNames: code
+            onDelete: RESTRICT
+            onUpdate: CASCADE
+
+        - addUniqueConstraint:
+            columnNames: portfolio_id, category_id
+            constraintName: unq_instrument_category_target_distr_pi
+            tableName: instrument_category_target_distribution
+
+        - tagDatabase:
+            tag: 0.0.11
+      rollback:
+        - dropTable:
+            tableName: instrument_category_target_distribution
