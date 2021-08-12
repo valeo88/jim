@@ -26,8 +26,8 @@ import static java.util.Optional.ofNullable;
 public class PortfolioInstrumentsDistributionDto {
 
     @NotBlank
-    protected String portfolioName;
-    protected Map<InstrumentCategory, BigDecimal> percentByCategory = new HashMap<>();
+    private String portfolioName;
+    private Map<InstrumentCategory, BigDecimal> percentByCategory = new HashMap<>();
 
     public static PortfolioInstrumentsDistributionDto byAccountingPrice(@NotNull List<InstrumentPosition> instrumentPositions,
                                                                         int bigdecimalOperationsScale) {
