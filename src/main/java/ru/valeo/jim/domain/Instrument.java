@@ -1,11 +1,13 @@
 package ru.valeo.jim.domain;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
 
 /** Financial instrument: share, bond, ETF, ... */
+@Accessors(chain = true)
 @Data
 @Table(name = "instrument")
 @Entity

@@ -25,72 +25,57 @@ class RebalanceServiceImplTest {
     private static final List<InstrumentPrice> actualPrices;
 
     static {
-        var cat1 = new InstrumentCategory();
-        cat1.setCode("1");
-        var cat2 = new InstrumentCategory();
-        cat2.setCode("2");
+        var cat1 = new InstrumentCategory().setCode("1");
+        var cat2 = new InstrumentCategory().setCode("2");
+        var cat3 = new InstrumentCategory().setCode("3");
 
-        categories = List.of(cat1, cat2);
+        categories = List.of(cat1, cat2, cat3);
 
-        var instr1 = new Instrument();
-        instr1.setSymbol("1");
-        instr1.setCategory(cat1);
-        var instr2 = new Instrument();
-        instr2.setSymbol("2");
-        instr2.setCategory(cat2);
+        var instr1 = new Instrument().setSymbol("1").setCategory(cat1);
+        var instr2 = new Instrument().setSymbol("2").setCategory(cat2);
+        var instr3 = new Instrument().setSymbol("3").setCategory(cat3);
 
-        instruments = List.of(instr1, instr2);
+        instruments = List.of(instr1, instr2, instr3);
 
-        var price1 = new InstrumentPrice();
-        price1.setInstrument(instr1);
-        price1.setPrice(new BigDecimal(50));
-        var price2 = new InstrumentPrice();
-        price2.setInstrument(instr2);
-        price2.setPrice(new BigDecimal(100));
+        var price1 = new InstrumentPrice().setInstrument(instr1).setPrice(new BigDecimal(50));
+        var price2 = new InstrumentPrice().setInstrument(instr2).setPrice(new BigDecimal(100));
+        var price3 = new InstrumentPrice().setInstrument(instr3).setPrice(new BigDecimal(30));
 
-        actualPrices = List.of(price1, price2);
+        actualPrices = List.of(price1, price2, price3);
     }
 
     @Mock
     private InstrumentPriceRepository instrumentPriceRepository;
-    private ApplicationConfig applicationConfig = new ApplicationConfig();
     private RebalanceService service;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        service = new RebalanceServiceImpl(instrumentPriceRepository, applicationConfig);
+        service = new RebalanceServiceImpl(instrumentPriceRepository, new ApplicationConfig());
+        when(instrumentPriceRepository.findByWhenAddLessThanEqualOrderByWhenAddDesc(any(LocalDateTime.class)))
+                .thenReturn(actualPrices);
     }
 
     @Test
-    public void shouldRebalanceOnTwoInstruments() {
-        when(instrumentPriceRepository.findByWhenAddLessThanEqualOrderByWhenAddDesc(any(LocalDateTime.class)))
-                .thenReturn(actualPrices);
-        var pos1 = new InstrumentPosition();
-        pos1.setInstrument(instruments.get(0));
-        pos1.setAmount(5);
-        pos1.setAccountingPrice(new BigDecimal(40));
-        var pos2 = new InstrumentPosition();
-        pos2.setInstrument(instruments.get(1));
-        pos2.setAmount(7);
-        pos2.setAccountingPrice(new BigDecimal(95));
+    void shouldRebalanceOnTwoCategories() {
+        var pos1 = new InstrumentPosition().setInstrument(instruments.get(0)).setAmount(5)
+                .setAccountingPrice(new BigDecimal(40));
+        var pos2 = new InstrumentPosition().setInstrument(instruments.get(1)).setAmount(7)
+                .setAccountingPrice(new BigDecimal(95));
 
-        var distr1 = new InstrumentCategoryTargetDistribution();
-        distr1.setCategory(categories.get(0));
-        distr1.setPercent(new BigDecimal(30));
-        var distr2 = new InstrumentCategoryTargetDistribution();
-        distr2.setCategory(categories.get(1));
-        distr2.setPercent(new BigDecimal(70));
+        var distr1 = new InstrumentCategoryTargetDistribution().setCategory(categories.get(0))
+                .setPercent(new BigDecimal(30));
+        var distr2 = new InstrumentCategoryTargetDistribution().setCategory(categories.get(1))
+                .setPercent(new BigDecimal(70));
 
-        var portfolio = new Portfolio();
-        portfolio.setName("Alpha");
-        portfolio.setAvailableMoney(BigDecimal.ZERO);
-        portfolio.setPositions(List.of(pos1, pos2));
-        portfolio.setCategoryTargetDistributions(List.of(distr1, distr2));
+        var portfolio = new Portfolio().setName("Alpha").setAvailableMoney(BigDecimal.ZERO)
+            .setPositions(List.of(pos1, pos2))
+            .setCategoryTargetDistributions(List.of(distr1, distr2));
 
         var result = service.rebalance(portfolio);
 
         assertEquals(portfolio.getName(), result.getPortfolioName());
+        assertEquals(2, result.getOperations().size());
         assertTrue(result.getOperations().stream()
                 .anyMatch(op -> op.getCategoryCode().equals("1")
                         && op.getOperation().equals(OperationType.BUY.name())
@@ -100,6 +85,48 @@ class RebalanceServiceImplTest {
                 .anyMatch(op -> op.getCategoryCode().equals("2")
                         && op.getOperation().equals(OperationType.SELL.name())
                         && op.getSum().equals(new BigDecimal("35.000"))
+                ));
+
+    }
+
+    @Test
+    void shouldRebalanceOnThreeCategories() {
+        var pos1 = new InstrumentPosition().setInstrument(instruments.get(0)).setAmount(5)
+                .setAccountingPrice(new BigDecimal(40));
+        var pos2 = new InstrumentPosition().setInstrument(instruments.get(1)).setAmount(7)
+                .setAccountingPrice(new BigDecimal(95));
+        var pos3 = new InstrumentPosition().setInstrument(instruments.get(2)).setAmount(4)
+                .setAccountingPrice(new BigDecimal(33));
+
+        var distr1 = new InstrumentCategoryTargetDistribution().setCategory(categories.get(0))
+                .setPercent(new BigDecimal(20));
+        var distr2 = new InstrumentCategoryTargetDistribution().setCategory(categories.get(1))
+                .setPercent(new BigDecimal(70));
+        var distr3 = new InstrumentCategoryTargetDistribution().setCategory(categories.get(2))
+                .setPercent(new BigDecimal(10));
+
+        var portfolio = new Portfolio().setName("Alpha").setAvailableMoney(BigDecimal.ZERO)
+                .setPositions(List.of(pos1, pos2, pos3))
+                .setCategoryTargetDistributions(List.of(distr1, distr2, distr3));
+
+        var result = service.rebalance(portfolio);
+
+        assertEquals(portfolio.getName(), result.getPortfolioName());
+        assertEquals(3, result.getOperations().size());
+        assertTrue(result.getOperations().stream()
+                .anyMatch(op -> op.getCategoryCode().equals("1")
+                        && op.getOperation().equals(OperationType.SELL.name())
+                        && op.getSum().equals(new BigDecimal("36.000"))
+                ));
+        assertTrue(result.getOperations().stream()
+                .anyMatch(op -> op.getCategoryCode().equals("2")
+                        && op.getOperation().equals(OperationType.BUY.name())
+                        && op.getSum().equals(new BigDecimal("49.000"))
+                ));
+        assertTrue(result.getOperations().stream()
+                .anyMatch(op -> op.getCategoryCode().equals("3")
+                        && op.getOperation().equals(OperationType.SELL.name())
+                        && op.getSum().equals(new BigDecimal("13.000"))
                 ));
 
     }

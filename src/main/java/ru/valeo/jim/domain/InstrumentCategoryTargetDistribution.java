@@ -1,12 +1,14 @@
 package ru.valeo.jim.domain;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
 
 /** Target instrument categories distribution in portfolio.
  * Example: shares - 70%, government bonds - 30%. */
+@Accessors(chain = true)
 @Data
 @Entity
 @Table(name = "instrument_category_target_distribution",

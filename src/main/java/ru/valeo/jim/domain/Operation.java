@@ -1,12 +1,14 @@
 package ru.valeo.jim.domain;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Accessors(chain = true)
 @Data
 @Table(name = "operation")
 @Entity

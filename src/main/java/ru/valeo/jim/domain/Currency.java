@@ -1,12 +1,14 @@
 package ru.valeo.jim.domain;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+@Accessors(chain = true)
 @Data
 @Entity
 @Table(name = "currency")

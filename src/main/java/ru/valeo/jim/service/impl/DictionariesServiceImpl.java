@@ -32,10 +32,10 @@ public class DictionariesServiceImpl implements DictionariesService {
     @Transactional
     @Override
     public Currency saveCurrency(@NotBlank String code, @NotNull String name, @NotNull String number) {
-        var currency = currencyRepository.findById(code).orElse(new Currency());
-        currency.setCode(code);
-        currency.setName(name);
-        currency.setNumber(number);
+        var currency = currencyRepository.findById(code).orElse(new Currency())
+            .setCode(code)
+            .setName(name)
+            .setNumber(number);
         return currencyRepository.save(currency);
     }
 
@@ -60,9 +60,9 @@ public class DictionariesServiceImpl implements DictionariesService {
     @Transactional
     @Override
     public InstrumentCategory saveInstrumentCategory(@NotBlank String code, @NotNull String name) {
-        var category = instrumentCategoryRepository.findById(code).orElse(new InstrumentCategory());
-        category.setCode(code);
-        category.setName(name);
+        var category = instrumentCategoryRepository.findById(code).orElse(new InstrumentCategory())
+            .setCode(code)
+            .setName(name);
         return instrumentCategoryRepository.save(category);
     }
 

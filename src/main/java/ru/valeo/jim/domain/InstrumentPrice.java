@@ -1,6 +1,7 @@
 package ru.valeo.jim.domain;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
@@ -8,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /** History of instrument prices. */
+@Accessors(chain = true)
 @Data
 @Table(name = "instrument_price")
 @Entity

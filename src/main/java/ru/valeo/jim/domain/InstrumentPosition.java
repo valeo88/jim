@@ -1,12 +1,14 @@
 package ru.valeo.jim.domain;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
 import java.math.BigDecimal;
 
 /** If we have some instrument in portfolio - we have position on this instrument. */
+@Accessors(chain = true)
 @Data
 @Table(name = "instrument_position",
         uniqueConstraints = @UniqueConstraint(columnNames = {"portfolio_id", "instrument_id"}))

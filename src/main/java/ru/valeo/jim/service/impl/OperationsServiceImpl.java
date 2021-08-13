@@ -35,12 +35,12 @@ public class OperationsServiceImpl implements OperationsService {
     @Override
     public AddMoneyDto addMoney(@NotNull AddMoneyDto dto) {
         var portfolio = loadPortfolio(dto.getPortfolioName());
-        var operation = new Operation();
-        operation.setAmount(1);
-        operation.setPortfolio(portfolio);
-        operation.setPrice(dto.getValue());
-        operation.setType(OperationType.ADD_MONEY);
-        operation.setWhenAdd(getWhenAdd(dto));
+        var operation = new Operation()
+            .setAmount(1)
+            .setPortfolio(portfolio)
+            .setPrice(dto.getValue())
+            .setType(OperationType.ADD_MONEY)
+            .setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -53,12 +53,12 @@ public class OperationsServiceImpl implements OperationsService {
         var portfolio = loadPortfolio(dto.getPortfolioName());
         checkIsMoneySufficient(portfolio, dto.getValue());
 
-        var operation = new Operation();
-        operation.setAmount(1);
-        operation.setPortfolio(portfolio);
-        operation.setPrice(dto.getValue());
-        operation.setType(OperationType.WITHDRAW_MONEY);
-        operation.setWhenAdd(getWhenAdd(dto));
+        var operation = new Operation()
+            .setAmount(1)
+            .setPortfolio(portfolio)
+            .setPrice(dto.getValue())
+            .setType(OperationType.WITHDRAW_MONEY)
+            .setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -73,14 +73,14 @@ public class OperationsServiceImpl implements OperationsService {
         validateInstrumentType(instrument.getType(), InstrumentType.typesWithoutCoupon());
         checkIsMoneySufficient(portfolio, dto.getTotalPrice());
 
-        var operation = new Operation();
-        operation.setType(OperationType.BUY);
-        operation.setInstrument(instrument);
-        operation.setPortfolio(portfolio);
-        operation.setPrice(dto.getPrice());
-        operation.setAccumulatedCouponIncome(BigDecimal.ZERO);
-        operation.setAmount(dto.getAmount());
-        operation.setWhenAdd(getWhenAdd(dto));
+        var operation = new Operation()
+            .setType(OperationType.BUY)
+            .setInstrument(instrument)
+            .setPortfolio(portfolio)
+            .setPrice(dto.getPrice())
+            .setAccumulatedCouponIncome(BigDecimal.ZERO)
+            .setAmount(dto.getAmount())
+            .setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -101,16 +101,16 @@ public class OperationsServiceImpl implements OperationsService {
         );
         checkIsMoneySufficient(portfolio, totalPrice);
 
-        var operation = new Operation();
-        operation.setType(OperationType.BUY);
-        operation.setInstrument(instrument);
-        operation.setPortfolio(portfolio);
-        operation.setPrice(instrument.getBondParValue().multiply(dto.getPercent())
-                .divide(BigDecimal.valueOf(100), applicationConfig.getBigdecimalOperationsScale(), RoundingMode.FLOOR));
-        operation.setAccumulatedCouponIncome(dto.getAccumulatedCouponIncome());
-        operation.setPercent(dto.getPercent());
-        operation.setAmount(dto.getAmount());
-        operation.setWhenAdd(getWhenAdd(dto));
+        var operation = new Operation()
+            .setType(OperationType.BUY)
+            .setInstrument(instrument)
+            .setPortfolio(portfolio)
+            .setPrice(instrument.getBondParValue().multiply(dto.getPercent())
+                    .divide(BigDecimal.valueOf(100), applicationConfig.getBigdecimalOperationsScale(), RoundingMode.FLOOR))
+            .setAccumulatedCouponIncome(dto.getAccumulatedCouponIncome())
+            .setPercent(dto.getPercent())
+            .setAmount(dto.getAmount())
+            .setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -125,14 +125,14 @@ public class OperationsServiceImpl implements OperationsService {
         validateInstrumentType(instrument.getType(), InstrumentType.typesWithoutCoupon());
         checkIsAmountSufficient(portfolio, dto.getSymbol(), dto.getAmount());
 
-        var operation = new Operation();
-        operation.setType(OperationType.SELL);
-        operation.setInstrument(instrument);
-        operation.setPortfolio(portfolio);
-        operation.setPrice(dto.getPrice());
-        operation.setAccumulatedCouponIncome(BigDecimal.ZERO);
-        operation.setAmount(dto.getAmount());
-        operation.setWhenAdd(getWhenAdd(dto));
+        var operation = new Operation()
+            .setType(OperationType.SELL)
+            .setInstrument(instrument)
+            .setPortfolio(portfolio)
+            .setPrice(dto.getPrice())
+            .setAccumulatedCouponIncome(BigDecimal.ZERO)
+            .setAmount(dto.getAmount())
+            .setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -147,16 +147,16 @@ public class OperationsServiceImpl implements OperationsService {
         validateInstrumentType(instrument.getType(), InstrumentType.typesWithCoupon());
         checkIsAmountSufficient(portfolio, dto.getSymbol(), dto.getAmount());
 
-        var operation = new Operation();
-        operation.setType(OperationType.SELL);
-        operation.setInstrument(instrument);
-        operation.setPortfolio(portfolio);
-        operation.setPrice(instrument.getBondParValue().multiply(dto.getPercent())
-                .divide(BigDecimal.valueOf(100), applicationConfig.getBigdecimalOperationsScale(), RoundingMode.FLOOR));
-        operation.setAccumulatedCouponIncome(dto.getAccumulatedCouponIncome());
-        operation.setPercent(dto.getPercent());
-        operation.setAmount(dto.getAmount());
-        operation.setWhenAdd(getWhenAdd(dto));
+        var operation = new Operation()
+            .setType(OperationType.SELL)
+            .setInstrument(instrument)
+            .setPortfolio(portfolio)
+            .setPrice(instrument.getBondParValue().multiply(dto.getPercent())
+                    .divide(BigDecimal.valueOf(100), applicationConfig.getBigdecimalOperationsScale(), RoundingMode.FLOOR))
+            .setAccumulatedCouponIncome(dto.getAccumulatedCouponIncome())
+            .setPercent(dto.getPercent())
+            .setAmount(dto.getAmount())
+            .setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -171,13 +171,13 @@ public class OperationsServiceImpl implements OperationsService {
         validateInstrumentType(instrument.getType(), InstrumentType.typesWithDividend());
         checkIsAmountSufficient(portfolio, dto.getSymbol(), dto.getAmount());
 
-        var operation = new Operation();
-        operation.setType(OperationType.DIVIDEND);
-        operation.setInstrument(instrument);
-        operation.setPortfolio(portfolio);
-        operation.setPrice(dto.getPrice());
-        operation.setAmount(dto.getAmount());
-        operation.setWhenAdd(getWhenAdd(dto));
+        var operation = new Operation()
+            .setType(OperationType.DIVIDEND)
+            .setInstrument(instrument)
+            .setPortfolio(portfolio)
+            .setPrice(dto.getPrice())
+            .setAmount(dto.getAmount())
+            .setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -192,13 +192,13 @@ public class OperationsServiceImpl implements OperationsService {
         validateInstrumentType(instrument.getType(), InstrumentType.typesWithCoupon());
         checkIsAmountSufficient(portfolio, dto.getSymbol(), dto.getAmount());
 
-        var operation = new Operation();
-        operation.setType(OperationType.COUPON);
-        operation.setInstrument(instrument);
-        operation.setPortfolio(portfolio);
-        operation.setPrice(dto.getPrice());
-        operation.setAmount(dto.getAmount());
-        operation.setWhenAdd(getWhenAdd(dto));
+        var operation = new Operation()
+            .setType(OperationType.COUPON)
+            .setInstrument(instrument)
+            .setPortfolio(portfolio)
+            .setPrice(dto.getPrice())
+            .setAmount(dto.getAmount())
+            .setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -211,12 +211,12 @@ public class OperationsServiceImpl implements OperationsService {
         var portfolio = loadPortfolio(dto.getPortfolioName());
         checkIsMoneySufficient(portfolio, dto.getValue());
 
-        var operation = new Operation();
-        operation.setAmount(1);
-        operation.setPortfolio(portfolio);
-        operation.setPrice(dto.getValue());
-        operation.setType(OperationType.TAX);
-        operation.setWhenAdd(getWhenAdd(dto));
+        var operation = new Operation()
+            .setAmount(1)
+            .setPortfolio(portfolio)
+            .setPrice(dto.getValue())
+            .setType(OperationType.TAX)
+            .setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -234,13 +234,13 @@ public class OperationsServiceImpl implements OperationsService {
                 .findFirst()
                 .orElseThrow(() -> new InstrumentPositionNotFoundException(portfolio.getName(), dto.getSymbol()));
 
-        var operation = new Operation();
-        operation.setType(OperationType.BOND_REDEMPTION);
-        operation.setInstrument(instrument);
-        operation.setPortfolio(portfolio);
-        operation.setPrice(instrument.getBondParValue());
-        operation.setAmount(instrumentPosition.getAmount());
-        operation.setWhenAdd(getWhenAdd(dto));
+        var operation = new Operation()
+            .setType(OperationType.BOND_REDEMPTION)
+            .setInstrument(instrument)
+            .setPortfolio(portfolio)
+            .setPrice(instrument.getBondParValue())
+            .setAmount(instrumentPosition.getAmount())
+            .setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 
         processOperation(operation);
@@ -321,11 +321,11 @@ public class OperationsServiceImpl implements OperationsService {
             position.setAccountingPrice(calcAccountingPrice(operation.getInstrument(), portfolio.getOperations(), newAmount));
         } else {
             // add new position: operation price === accounting price
-            var newPosition = new InstrumentPosition();
-            newPosition.setPortfolio(portfolio);
-            newPosition.setInstrument(operation.getInstrument());
-            newPosition.setAmount(operation.getAmount());
-            newPosition.setAccountingPrice(operation.getPrice());
+            var newPosition = new InstrumentPosition()
+                .setPortfolio(portfolio)
+                .setInstrument(operation.getInstrument())
+                .setAmount(operation.getAmount())
+                .setAccountingPrice(operation.getPrice());
             portfolio.getPositions().add(newPosition);
         }
     }

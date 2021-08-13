@@ -49,13 +49,13 @@ public class InstrumentsServiceImpl implements InstrumentsService {
                 .orElseThrow(() -> new InstrumentCategoryNotFoundException(dto.getCategoryCode()));
         var type = InstrumentType.findByName(dto.getType());
 
-        var instrument = instrumentRepository.findById(dto.getSymbol()).orElseGet(Instrument::new);
-        instrument.setSymbol(dto.getSymbol());
-        instrument.setName(dto.getName());
-        instrument.setBaseCurrency(currency);
-        instrument.setCategory(category);
-        instrument.setType(type);
-        instrument.setIsin(dto.getIsin());
+        var instrument = instrumentRepository.findById(dto.getSymbol()).orElseGet(Instrument::new)
+            .setSymbol(dto.getSymbol())
+            .setName(dto.getName())
+            .setBaseCurrency(currency)
+            .setCategory(category)
+            .setType(type)
+            .setIsin(dto.getIsin());
 
         return InstrumentDto.from(instrumentRepository.save(instrument));
     }
@@ -67,14 +67,14 @@ public class InstrumentsServiceImpl implements InstrumentsService {
         var category = instrumentCategoryRepository.findById(dto.getCategoryCode())
                 .orElseThrow(() -> new InstrumentCategoryNotFoundException(dto.getCategoryCode()));
 
-        var instrument = instrumentRepository.findById(dto.getSymbol()).orElseGet(Instrument::new);
-        instrument.setSymbol(dto.getSymbol());
-        instrument.setName(dto.getName());
-        instrument.setBaseCurrency(currency);
-        instrument.setCategory(category);
-        instrument.setType(InstrumentType.BOND);
-        instrument.setIsin(dto.getIsin());
-        instrument.setBondParValue(dto.getParValue());
+        var instrument = instrumentRepository.findById(dto.getSymbol()).orElseGet(Instrument::new)
+            .setSymbol(dto.getSymbol())
+            .setName(dto.getName())
+            .setBaseCurrency(currency)
+            .setCategory(category)
+            .setType(InstrumentType.BOND)
+            .setIsin(dto.getIsin())
+            .setBondParValue(dto.getParValue());
 
         return BondDto.from(instrumentRepository.save(instrument));
     }

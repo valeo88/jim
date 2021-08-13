@@ -1,6 +1,7 @@
 package ru.valeo.jim.domain;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -9,6 +10,7 @@ import javax.persistence.Table;
 
 /** Category of financial instrument.
  * Used for custom categorization and inside portfolio distribution.*/
+@Accessors(chain = true)
 @Data
 @Entity
 @Table(name = "instrument_category")
