@@ -1,4 +1,4 @@
-package ru.valeo.jim.service.impl;
+package ru.valeo.jim.service;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -7,7 +7,6 @@ import ru.valeo.jim.config.ApplicationConfig;
 import ru.valeo.jim.domain.*;
 import ru.valeo.jim.dto.PortfolioRebalancePropositionDto;
 import ru.valeo.jim.repository.InstrumentPriceRepository;
-import ru.valeo.jim.service.RebalanceService;
 
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -23,14 +22,13 @@ import static java.util.Optional.ofNullable;
 
 @AllArgsConstructor
 @Service
-public class RebalanceServiceImpl implements RebalanceService {
+public class PortfolioRebalanceHelper {
 
     private final InstrumentPriceRepository instrumentPriceRepository;
     private final ApplicationConfig applicationConfig;
 
     @Transactional(readOnly = true)
-    @Override
-    public PortfolioRebalancePropositionDto rebalance(@NotNull Portfolio portfolio) {
+    public PortfolioRebalancePropositionDto rebalance(@NotNull Portfolio portfolio, boolean useAvailableMoney) {
         var result = new PortfolioRebalancePropositionDto();
         result.setPortfolioName(portfolio.getName());
 
@@ -42,15 +40,19 @@ public class RebalanceServiceImpl implements RebalanceService {
             return result;
         }
 
+        final var availableMoney = useAvailableMoney ? portfolio.getAvailableMoney() : BigDecimal.ZERO;
         final var totalPriceByCategoryActual = getTotalPricesByCategory(portfolio.getPositions());
         final var totalInstrumentsActualPrice = totalPriceByCategoryActual.values().stream()
                 .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         Map<InstrumentCategory, BigDecimal> totalPriceByCategoryTarget = targetPercentDistribution.entrySet()
-                .stream().map(entry -> {
-                    entry.setValue(entry.getValue().multiply(totalInstrumentsActualPrice)
-                            .divide(new BigDecimal(100),
-                                    applicationConfig.getBigdecimalOperationsScale(), RoundingMode.FLOOR));
-                    return entry;
+                .stream().peek(entry -> {
+                    var targetByActualPrice = entry.getValue().multiply(totalInstrumentsActualPrice)
+                            .divide(new BigDecimal(100), applicationConfig.getBigdecimalOperationsScale(),
+                                    RoundingMode.FLOOR);
+                    var targetByAvailableMoney = entry.getValue().multiply(availableMoney)
+                            .divide(new BigDecimal(100), applicationConfig.getBigdecimalOperationsScale(),
+                                    RoundingMode.FLOOR);
+                    entry.setValue(targetByActualPrice.add(targetByAvailableMoney));
                 })
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         // process all actual distribution and fill operations

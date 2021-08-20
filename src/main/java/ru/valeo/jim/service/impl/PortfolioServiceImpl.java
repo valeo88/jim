@@ -10,12 +10,14 @@ import ru.valeo.jim.domain.*;
 import ru.valeo.jim.dto.InstrumentPositionDto;
 import ru.valeo.jim.dto.PortfolioDto;
 import ru.valeo.jim.dto.PortfolioInstrumentsDistributionDto;
+import ru.valeo.jim.dto.PortfolioRebalancePropositionDto;
 import ru.valeo.jim.dto.operation.*;
 import ru.valeo.jim.exception.CurrencyNotFoundException;
 import ru.valeo.jim.exception.InstrumentCategoryNotFoundException;
 import ru.valeo.jim.exception.PortfolioNotFoundException;
 import ru.valeo.jim.exception.UnexpectedValueException;
 import ru.valeo.jim.repository.*;
+import ru.valeo.jim.service.PortfolioRebalanceHelper;
 import ru.valeo.jim.service.PortfolioService;
 
 import javax.validation.constraints.NotBlank;
@@ -36,6 +38,7 @@ public class PortfolioServiceImpl implements PortfolioService {
     private final CurrencyRepository currencyRepository;
     private final InstrumentPriceRepository instrumentPriceRepository;
     private final InstrumentCategoryRepository instrumentCategoryRepository;
+    private final PortfolioRebalanceHelper rebalanceHelper;
     private final ApplicationConfig applicationConfig;
 
     @Transactional(readOnly = true)
@@ -159,6 +162,14 @@ public class PortfolioServiceImpl implements PortfolioService {
     public PortfolioInstrumentsDistributionDto getTargetInstrumentsDistribution(String portfolioName) {
         return portfolioRepository.findById(getOrDefaultPortfolioName(portfolioName))
                 .map(PortfolioInstrumentsDistributionDto::byTargetPercent)
+                .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public PortfolioRebalancePropositionDto getRebalanceProposition(String portfolioName, boolean useAvailableMoney) {
+        return portfolioRepository.findById(getOrDefaultPortfolioName(portfolioName))
+                .map(portfolio -> rebalanceHelper.rebalance(portfolio, useAvailableMoney))
                 .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
     }
 

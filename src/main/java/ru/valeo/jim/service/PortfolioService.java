@@ -4,6 +4,7 @@ import org.springframework.lang.Nullable;
 import ru.valeo.jim.dto.InstrumentPositionDto;
 import ru.valeo.jim.dto.PortfolioDto;
 import ru.valeo.jim.dto.PortfolioInstrumentsDistributionDto;
+import ru.valeo.jim.dto.PortfolioRebalancePropositionDto;
 import ru.valeo.jim.dto.operation.OperationDto;
 
 import javax.validation.constraints.NotBlank;
@@ -49,6 +50,10 @@ public interface PortfolioService {
 
     /** Get target instruments distribution in portfolio. */
     PortfolioInstrumentsDistributionDto getTargetInstrumentsDistribution(@Nullable String portfolioName);
+
+    /** Get rebalance proposition by target portfolio categories distribution.
+     * @param useAvailableMoney - use all available money in portfolio. */
+    PortfolioRebalancePropositionDto getRebalanceProposition(@Nullable String portfolioName, boolean useAvailableMoney);
 
     /** Reinitialize portfolio:
      * - delete all operations

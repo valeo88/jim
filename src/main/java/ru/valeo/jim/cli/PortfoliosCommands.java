@@ -97,6 +97,16 @@ public class PortfoliosCommands {
                 + instrumentPositions;
     }
 
+    @ShellMethod(value = "Get rebalance proposition", key = "portfolio-rebalance")
+    public String rebalance(@ShellOption(defaultValue = NULL) String name, boolean useAvaliableMoney) {
+        var dto = portfolioService.getRebalanceProposition(name, useAvaliableMoney);
+        return dto.getPortfolioName() + SEPARATOR
+                + dto.getOperations().stream()
+                    .map(op -> op.getCategoryName() + " (" + op.getCategoryCode() + ") "
+                            + op.getOperation() + " - " + op.getSum())
+                    .collect(Collectors.joining(System.lineSeparator()));
+    }
+
     @ShellMethod(value = "Reinit portfolio. All data in portfolio will be deleted!!!", key = "reinit-portfolio")
     public String reinit(String name) {
         try {

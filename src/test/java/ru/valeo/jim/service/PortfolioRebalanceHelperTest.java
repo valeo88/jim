@@ -1,4 +1,4 @@
-package ru.valeo.jim.service.impl;
+package ru.valeo.jim.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -7,7 +7,6 @@ import org.mockito.MockitoAnnotations;
 import ru.valeo.jim.config.ApplicationConfig;
 import ru.valeo.jim.domain.*;
 import ru.valeo.jim.repository.InstrumentPriceRepository;
-import ru.valeo.jim.service.RebalanceService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-class RebalanceServiceImplTest {
+class PortfolioRebalanceHelperTest {
 
     private static final List<InstrumentCategory> categories;
     private static final List<Instrument> instruments;
@@ -46,12 +45,12 @@ class RebalanceServiceImplTest {
 
     @Mock
     private InstrumentPriceRepository instrumentPriceRepository;
-    private RebalanceService service;
+    private PortfolioRebalanceHelper helper;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        service = new RebalanceServiceImpl(instrumentPriceRepository, new ApplicationConfig());
+        helper = new PortfolioRebalanceHelper(instrumentPriceRepository, new ApplicationConfig());
         when(instrumentPriceRepository.findByWhenAddLessThanEqualOrderByWhenAddDesc(any(LocalDateTime.class)))
                 .thenReturn(actualPrices);
     }
@@ -72,7 +71,7 @@ class RebalanceServiceImplTest {
             .setPositions(List.of(pos1, pos2))
             .setCategoryTargetDistributions(List.of(distr1, distr2));
 
-        var result = service.rebalance(portfolio);
+        var result = helper.rebalance(portfolio, false);
 
         assertEquals(portfolio.getName(), result.getPortfolioName());
         assertEquals(2, result.getOperations().size());
@@ -90,7 +89,7 @@ class RebalanceServiceImplTest {
     }
 
     @Test
-    void shouldRebalanceOnThreeCategories() {
+    void shouldRebalanceOnThreeCategoriesWithoutAvailableMoney() {
         var pos1 = new InstrumentPosition().setInstrument(instruments.get(0)).setAmount(5)
                 .setAccountingPrice(new BigDecimal(40));
         var pos2 = new InstrumentPosition().setInstrument(instruments.get(1)).setAmount(7)
@@ -109,7 +108,7 @@ class RebalanceServiceImplTest {
                 .setPositions(List.of(pos1, pos2, pos3))
                 .setCategoryTargetDistributions(List.of(distr1, distr2, distr3));
 
-        var result = service.rebalance(portfolio);
+        var result = helper.rebalance(portfolio, false);
 
         assertEquals(portfolio.getName(), result.getPortfolioName());
         assertEquals(3, result.getOperations().size());
@@ -127,6 +126,49 @@ class RebalanceServiceImplTest {
                 .anyMatch(op -> op.getCategoryCode().equals("3")
                         && op.getOperation().equals(OperationType.SELL.name())
                         && op.getSum().equals(new BigDecimal("13.000"))
+                ));
+
+    }
+
+    @Test
+    void shouldRebalanceOnThreeCategoriesWithAvailableMoney() {
+        var pos1 = new InstrumentPosition().setInstrument(instruments.get(0)).setAmount(5)
+                .setAccountingPrice(new BigDecimal(40));
+        var pos2 = new InstrumentPosition().setInstrument(instruments.get(1)).setAmount(7)
+                .setAccountingPrice(new BigDecimal(95));
+        var pos3 = new InstrumentPosition().setInstrument(instruments.get(2)).setAmount(4)
+                .setAccountingPrice(new BigDecimal(33));
+
+        var distr1 = new InstrumentCategoryTargetDistribution().setCategory(categories.get(0))
+                .setPercent(new BigDecimal(20));
+        var distr2 = new InstrumentCategoryTargetDistribution().setCategory(categories.get(1))
+                .setPercent(new BigDecimal(70));
+        var distr3 = new InstrumentCategoryTargetDistribution().setCategory(categories.get(2))
+                .setPercent(new BigDecimal(10));
+
+        var portfolio = new Portfolio().setName("Alpha")
+                .setAvailableMoney(BigDecimal.valueOf(200))
+                .setPositions(List.of(pos1, pos2, pos3))
+                .setCategoryTargetDistributions(List.of(distr1, distr2, distr3));
+
+        var result = helper.rebalance(portfolio, true);
+
+        assertEquals(portfolio.getName(), result.getPortfolioName());
+        assertEquals(3, result.getOperations().size());
+        assertTrue(result.getOperations().stream()
+                .anyMatch(op -> op.getCategoryCode().equals("1")
+                        && op.getOperation().equals(OperationType.BUY.name())
+                        && op.getSum().equals(new BigDecimal("4.000"))
+                ));
+        assertTrue(result.getOperations().stream()
+                .anyMatch(op -> op.getCategoryCode().equals("2")
+                        && op.getOperation().equals(OperationType.BUY.name())
+                        && op.getSum().equals(new BigDecimal("189.000"))
+                ));
+        assertTrue(result.getOperations().stream()
+                .anyMatch(op -> op.getCategoryCode().equals("3")
+                        && op.getOperation().equals(OperationType.BUY.name())
+                        && op.getSum().equals(new BigDecimal("7.000"))
                 ));
 
     }
