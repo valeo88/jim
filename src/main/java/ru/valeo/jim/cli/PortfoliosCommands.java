@@ -98,8 +98,8 @@ public class PortfoliosCommands {
     }
 
     @ShellMethod(value = "Get rebalance proposition", key = "portfolio-rebalance")
-    public String rebalance(@ShellOption(defaultValue = NULL) String name, boolean useAvaliableMoney) {
-        var dto = portfolioService.getRebalanceProposition(name, useAvaliableMoney);
+    public String rebalance(@ShellOption(defaultValue = NULL) String name, boolean useAvailableMoney) {
+        var dto = portfolioService.getRebalanceProposition(name, useAvailableMoney);
         return dto.getPortfolioName() + SEPARATOR
                 + dto.getOperations().stream()
                     .map(op -> op.getCategoryName() + " (" + op.getCategoryCode() + ") "

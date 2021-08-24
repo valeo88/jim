@@ -68,6 +68,16 @@ public class PortfolioRebalanceHelper {
                 );
             }
         });
+        // process all categories, that have no actual instruments positions
+        totalPriceByCategoryTarget.entrySet().stream()
+                .filter(entry -> !totalPriceByCategoryActual.containsKey(entry.getKey()))
+                .filter(entry -> entry.getValue().compareTo(BigDecimal.ZERO) > 0)
+                .forEach(entry -> result.getOperations().add(new PortfolioRebalancePropositionDto.RebalanceOperation()
+                        .setCategoryCode(entry.getKey().getCode())
+                        .setCategoryName(entry.getKey().getName())
+                        .setOperation(OperationType.BUY.name())
+                        .setSum(entry.getValue())
+                ));
 
         return result;
     }

@@ -173,4 +173,45 @@ class PortfolioRebalanceHelperTest {
 
     }
 
+    @Test
+    void shouldRebalanceOnTwoCategoriesWithThreeTargetDistributions() {
+        var pos1 = new InstrumentPosition().setInstrument(instruments.get(0)).setAmount(5)
+                .setAccountingPrice(new BigDecimal(40));
+        var pos2 = new InstrumentPosition().setInstrument(instruments.get(1)).setAmount(7)
+                .setAccountingPrice(new BigDecimal(95));
+
+        var distr1 = new InstrumentCategoryTargetDistribution().setCategory(categories.get(0))
+                .setPercent(new BigDecimal(20));
+        var distr2 = new InstrumentCategoryTargetDistribution().setCategory(categories.get(1))
+                .setPercent(new BigDecimal(70));
+        var distr3 = new InstrumentCategoryTargetDistribution().setCategory(categories.get(2))
+                .setPercent(new BigDecimal(10));
+
+        var portfolio = new Portfolio().setName("Alpha")
+                .setAvailableMoney(BigDecimal.valueOf(200))
+                .setPositions(List.of(pos1, pos2))
+                .setCategoryTargetDistributions(List.of(distr1, distr2, distr3));
+
+        var result = helper.rebalance(portfolio, true);
+
+        assertEquals(portfolio.getName(), result.getPortfolioName());
+        assertEquals(3, result.getOperations().size());
+        assertTrue(result.getOperations().stream()
+                .anyMatch(op -> op.getCategoryCode().equals("1")
+                        && op.getOperation().equals(OperationType.SELL.name())
+                        && op.getSum().equals(new BigDecimal("20.000"))
+                ));
+        assertTrue(result.getOperations().stream()
+                .anyMatch(op -> op.getCategoryCode().equals("2")
+                        && op.getOperation().equals(OperationType.BUY.name())
+                        && op.getSum().equals(new BigDecimal("105.000"))
+                ));
+        assertTrue(result.getOperations().stream()
+                .anyMatch(op -> op.getCategoryCode().equals("3")
+                        && op.getOperation().equals(OperationType.BUY.name())
+                        && op.getSum().equals(new BigDecimal("115.000"))
+                ));
+
+    }
+
 }
