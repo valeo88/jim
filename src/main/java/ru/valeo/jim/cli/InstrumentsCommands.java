@@ -96,6 +96,25 @@ public class InstrumentsCommands {
         }
     }
 
+    @ShellMethod(value = "Update currency instrument or create if not exists", key = "save-currency-instrument")
+    public String saveCurrencyInstrument(String symbol,
+                           String name,
+                           String currency,
+                           String category) {
+        try {
+            var dto = new InstrumentDto();
+            dto.setSymbol(symbol);
+            dto.setName(name);
+            dto.setBaseCurrencyCode(currency);
+            dto.setCategoryCode(category);
+            dto.setType(InstrumentType.CURRENCY.name());
+
+            return instrumentsService.save(dto).toString();
+        } catch (RuntimeException e) {
+            return e.getMessage();
+        }
+    }
+
     @ShellMethod(value = "Delete instrument", key = "delete-instrument")
     public String deleteInstrument(String symbol) {
         if (instrumentsService.delete(symbol)) {

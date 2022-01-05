@@ -9,7 +9,8 @@ import java.util.Set;
 public enum InstrumentType {
     SHARE,
     BOND,
-    ETF;
+    ETF,
+    CURRENCY;
 
     public static InstrumentType findByName(String name) {
         return Arrays.stream(values())
@@ -23,7 +24,7 @@ public enum InstrumentType {
     }
 
     public static Set<InstrumentType> typesWithoutCoupon() {
-        return Set.of(SHARE, ETF);
+        return Set.of(SHARE, ETF, CURRENCY);
     }
 
     public static Set<InstrumentType> typesWithDividend() {

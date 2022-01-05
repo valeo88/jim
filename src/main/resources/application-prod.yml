@@ -1,0 +1,9 @@
+
+spring:
+  datasource:
+    url: jdbc:h2:file:~/jim-app-prod
+    username: admin
+    password: admin
+
+liquibase:
+  contexts: prod
