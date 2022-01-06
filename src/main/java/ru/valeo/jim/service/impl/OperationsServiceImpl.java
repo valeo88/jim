@@ -240,6 +240,7 @@ public class OperationsServiceImpl implements OperationsService {
             .setPortfolio(portfolio)
             .setPrice(instrument.getBondParValue())
             .setAmount(instrumentPosition.getAmount())
+            .setAccumulatedCouponIncome(dto.getAccumulatedCouponIncome())
             .setWhenAdd(getWhenAdd(dto));
         operation = operationRepository.save(operation);
 

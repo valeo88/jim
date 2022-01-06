@@ -164,12 +164,14 @@ public class OperationsCommands {
 
     @ShellMethod(value = "Bond redemption operation", key = "bond-redemption")
     public String bondRedemption(String symbol,
+                                 BigDecimal accumulatedCouponIncome,
                                  @ShellOption(defaultValue = NULL) String whenAdd,
                                  @ShellOption(defaultValue = NULL) String portfolioName) {
         var dto = BondRedemptionDto.builder()
                 .portfolioName(portfolioName)
                 .symbol(symbol)
                 .whenAdd(dateTimeHelper.parse(whenAdd))
+                .accumulatedCouponIncome(accumulatedCouponIncome)
                 .build();
         return operationsService.bondRedemption(dto).toString();
     }

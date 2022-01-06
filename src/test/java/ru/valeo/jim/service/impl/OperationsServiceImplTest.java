@@ -325,9 +325,11 @@ class OperationsServiceImplTest {
                 .percent(new BigDecimal("101.12"))
                 .accumulatedCouponIncome(new BigDecimal("3.2"))
                 .build());
+        var accumulatedCouponIncomeOnRedemption = new BigDecimal("5.5");
         var bondRedemptionOperation = operationsService.bondRedemption(BondRedemptionDto.builder()
                 .portfolioName(portfolioDto.getName())
                 .symbol(bondDto.getSymbol())
+                .accumulatedCouponIncome(accumulatedCouponIncomeOnRedemption)
                 .build());
         var reloadedPortfolioDto = portfolioService.getPortfolio(portfolioDto.getName());
         var positions = portfolioService.getInstrumentPositions(portfolioDto.getName());
@@ -340,6 +342,7 @@ class OperationsServiceImplTest {
                             .divide(BigDecimal.valueOf(100), applicationConfig.getBigdecimalOperationsScale(),
                                     RoundingMode.FLOOR))
                         .add(bondRedemptionOperation.getTotalPrice())
+                        .add(accumulatedCouponIncomeOnRedemption)
                         .setScale(applicationConfig.getBigdecimalOperationsScale(), RoundingMode.FLOOR),
                 reloadedPortfolioDto.get().getAvailableMoney());
         assertTrue(positions.stream()

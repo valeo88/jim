@@ -18,15 +18,17 @@ public class BondRedemptionDto extends OperationDto {
     String name;
     BigDecimal totalPrice;
     String currencyCode;
+    BigDecimal accumulatedCouponIncome;
 
     @Builder
     public BondRedemptionDto(String portfolioName, LocalDateTime whenAdd, @NotBlank String symbol,
-                             String name, BigDecimal totalPrice, String currencyCode) {
+                             String name, BigDecimal totalPrice, String currencyCode, BigDecimal accumulatedCouponIncome) {
         super(portfolioName, whenAdd);
         this.symbol = symbol;
         this.name = name;
         this.totalPrice = totalPrice;
         this.currencyCode = currencyCode;
+        this.accumulatedCouponIncome = accumulatedCouponIncome;
     }
 
     public static BondRedemptionDto from(Operation operation) {
@@ -37,6 +39,7 @@ public class BondRedemptionDto extends OperationDto {
         dto.setTotalPrice(operation.getTotalPrice());
         dto.setWhenAdd(operation.getWhenAdd());
         dto.setCurrencyCode(operation.getPortfolio().getCurrency().getCode());
+        dto.setAccumulatedCouponIncome(operation.getAccumulatedCouponIncome());
         return dto;
     }
 
@@ -46,7 +49,8 @@ public class BondRedemptionDto extends OperationDto {
                 "portfolioName='" + portfolioName + '\'' +
                 ", symbol='" + symbol + '\'' +
                 ", name='" + name + '\'' +
-                ", total price=" + totalPrice + " " + currencyCode;
+                ", total price=" + totalPrice + " " + currencyCode +
+                ", accumulated coupon income=" + accumulatedCouponIncome + " " + currencyCode;
     }
 
 }
