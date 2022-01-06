@@ -1,8 +1,18 @@
 package ru.valeo.jim.service;
 
-import ru.valeo.jim.dto.operation.*;
-
 import javax.validation.constraints.NotNull;
+
+import ru.valeo.jim.dto.operation.AddMoneyDto;
+import ru.valeo.jim.dto.operation.BondRedemptionDto;
+import ru.valeo.jim.dto.operation.BuyBondDto;
+import ru.valeo.jim.dto.operation.BuyInstrumentDto;
+import ru.valeo.jim.dto.operation.CouponDto;
+import ru.valeo.jim.dto.operation.DividendDto;
+import ru.valeo.jim.dto.operation.InstrumentConversionDto;
+import ru.valeo.jim.dto.operation.SellBondDto;
+import ru.valeo.jim.dto.operation.SellInstrumentDto;
+import ru.valeo.jim.dto.operation.TaxDto;
+import ru.valeo.jim.dto.operation.WithdrawMoneyDto;
 
 /** Service for operations */
 public interface OperationsService {
@@ -36,4 +46,7 @@ public interface OperationsService {
 
     /** Bond redemption. */
     BondRedemptionDto bondRedemption(@NotNull BondRedemptionDto dto);
+
+    /** Instrument conversion in portfolio. */
+    InstrumentConversionDto instrumentConversion(@NotNull InstrumentConversionDto dto);
 }

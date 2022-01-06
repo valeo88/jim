@@ -1,5 +1,9 @@
 package ru.valeo.jim.service.impl;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -8,16 +12,29 @@ import ru.valeo.jim.domain.InstrumentType;
 import ru.valeo.jim.dto.BondDto;
 import ru.valeo.jim.dto.InstrumentDto;
 import ru.valeo.jim.dto.PortfolioDto;
-import ru.valeo.jim.dto.operation.*;
-import ru.valeo.jim.exception.*;
+import ru.valeo.jim.dto.operation.AddMoneyDto;
+import ru.valeo.jim.dto.operation.BondRedemptionDto;
+import ru.valeo.jim.dto.operation.BuyBondDto;
+import ru.valeo.jim.dto.operation.BuyInstrumentDto;
+import ru.valeo.jim.dto.operation.CouponDto;
+import ru.valeo.jim.dto.operation.DividendDto;
+import ru.valeo.jim.dto.operation.InstrumentConversionDto;
+import ru.valeo.jim.dto.operation.SellInstrumentDto;
+import ru.valeo.jim.dto.operation.TaxDto;
+import ru.valeo.jim.dto.operation.WithdrawMoneyDto;
+import ru.valeo.jim.exception.InstrumentNotFoundException;
+import ru.valeo.jim.exception.InsufficientAmountException;
+import ru.valeo.jim.exception.InsufficientMoneyException;
+import ru.valeo.jim.exception.PortfolioNotFoundException;
+import ru.valeo.jim.exception.UnsupportedInstrumentTypeException;
 import ru.valeo.jim.service.InstrumentsService;
 import ru.valeo.jim.service.PortfolioService;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 class OperationsServiceImplTest {
@@ -262,6 +279,38 @@ class OperationsServiceImplTest {
         assertEquals(addMoneyDto.getValue().subtract(buyOperation.getTotalPrice())
                         .add(dividendOperation.getTotalPrice()),
                 reloadedPortfolioDto.get().getAvailableMoney());
+    }
+
+    @Test
+    void whenHasShareInPortfolio_shouldPerformConversionOperation() {
+        // create test portfolio with sufficient money
+        var portfolioDto = createTestPortfolioDto();
+        portfolioService.save(portfolioDto);
+        var addMoneyDto = operationsService.addMoney(AddMoneyDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .value(new BigDecimal("1000"))
+                .build());
+        // create test share
+        var instrumentDto = createInstrumentDto();
+        instrumentDto.setType(InstrumentType.SHARE.name());
+        instrumentsService.save(instrumentDto);
+
+        var buyOperation = operationsService.buyInstrument(BuyInstrumentDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .symbol(instrumentDto.getSymbol())
+                .amount(3)
+                .price(new BigDecimal("15"))
+                .build());
+        var conversionOperation = operationsService.instrumentConversion(InstrumentConversionDto.builder()
+                .portfolioName(portfolioDto.getName())
+                .symbol(instrumentDto.getSymbol())
+                .newAmount(30)
+                .build());
+        var instrumentPositions = portfolioService.getInstrumentPositions(portfolioDto.getName());
+
+        assertFalse(instrumentPositions.isEmpty());
+        assertEquals(conversionOperation.getNewAmount(), instrumentPositions.get(0).getAmount());
+        assertEquals(new BigDecimal("1.500"), instrumentPositions.get(0).getAccountingPrice());
     }
 
     @Test

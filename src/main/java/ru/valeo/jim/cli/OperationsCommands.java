@@ -1,17 +1,27 @@
 package ru.valeo.jim.cli;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
-import ru.valeo.jim.dto.operation.*;
+import ru.valeo.jim.dto.operation.AddMoneyDto;
+import ru.valeo.jim.dto.operation.BondRedemptionDto;
+import ru.valeo.jim.dto.operation.BuyBondDto;
+import ru.valeo.jim.dto.operation.BuyInstrumentDto;
+import ru.valeo.jim.dto.operation.CouponDto;
+import ru.valeo.jim.dto.operation.DividendDto;
+import ru.valeo.jim.dto.operation.InstrumentConversionDto;
+import ru.valeo.jim.dto.operation.SellBondDto;
+import ru.valeo.jim.dto.operation.SellInstrumentDto;
+import ru.valeo.jim.dto.operation.TaxDto;
+import ru.valeo.jim.dto.operation.WithdrawMoneyDto;
 import ru.valeo.jim.service.OperationsService;
 import ru.valeo.jim.service.PortfolioService;
 import ru.valeo.jim.service.util.DateTimeHelper;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.springframework.shell.standard.ShellOption.NULL;
 
@@ -176,6 +186,18 @@ public class OperationsCommands {
         return operationsService.bondRedemption(dto).toString();
     }
 
+    @ShellMethod(value = "Instrument conversion operation", key = "instrument-conversion")
+    public String bondRedemption(String symbol,
+                                 Integer newAmount,
+                                 @ShellOption(defaultValue = NULL) String whenAdd,
+                                 @ShellOption(defaultValue = NULL) String portfolioName) {
+        var dto = InstrumentConversionDto.builder()
+                .portfolioName(portfolioName)
+                .symbol(symbol)
+                .whenAdd(dateTimeHelper.parse(whenAdd))
+                .newAmount(newAmount)
+                .build();
+        return operationsService.instrumentConversion(dto).toString();
+    }
 
-    
 }

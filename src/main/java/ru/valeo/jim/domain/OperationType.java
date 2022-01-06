@@ -23,5 +23,8 @@ public enum OperationType {
     BOND_REDEMPTION,
 
     /** Fees payed to broker, government, ... */
-    TAX;
+    TAX,
+
+    /** Conversion amount of instrument in portfolio. */
+    INSTRUMENT_CONVERSION
 }

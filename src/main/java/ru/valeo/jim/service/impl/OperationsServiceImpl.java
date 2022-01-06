@@ -1,24 +1,46 @@
 package ru.valeo.jim.service.impl;
 
 
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import ru.valeo.jim.config.ApplicationConfig;
-import ru.valeo.jim.domain.*;
-import ru.valeo.jim.dto.operation.*;
-import ru.valeo.jim.exception.*;
-import ru.valeo.jim.repository.InstrumentRepository;
-import ru.valeo.jim.repository.OperationRepository;
-import ru.valeo.jim.repository.PortfolioRepository;
-import ru.valeo.jim.service.OperationsService;
-
-import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+
+import javax.validation.constraints.NotNull;
+
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.valeo.jim.config.ApplicationConfig;
+import ru.valeo.jim.domain.Instrument;
+import ru.valeo.jim.domain.InstrumentPosition;
+import ru.valeo.jim.domain.InstrumentType;
+import ru.valeo.jim.domain.Operation;
+import ru.valeo.jim.domain.OperationType;
+import ru.valeo.jim.domain.Portfolio;
+import ru.valeo.jim.dto.operation.AddMoneyDto;
+import ru.valeo.jim.dto.operation.BondRedemptionDto;
+import ru.valeo.jim.dto.operation.BuyBondDto;
+import ru.valeo.jim.dto.operation.BuyInstrumentDto;
+import ru.valeo.jim.dto.operation.CouponDto;
+import ru.valeo.jim.dto.operation.DividendDto;
+import ru.valeo.jim.dto.operation.InstrumentConversionDto;
+import ru.valeo.jim.dto.operation.OperationDto;
+import ru.valeo.jim.dto.operation.SellBondDto;
+import ru.valeo.jim.dto.operation.SellInstrumentDto;
+import ru.valeo.jim.dto.operation.TaxDto;
+import ru.valeo.jim.dto.operation.WithdrawMoneyDto;
+import ru.valeo.jim.exception.InstrumentNotFoundException;
+import ru.valeo.jim.exception.InstrumentPositionNotFoundException;
+import ru.valeo.jim.exception.InsufficientAmountException;
+import ru.valeo.jim.exception.InsufficientMoneyException;
+import ru.valeo.jim.exception.PortfolioNotFoundException;
+import ru.valeo.jim.exception.UnsupportedInstrumentTypeException;
+import ru.valeo.jim.repository.InstrumentRepository;
+import ru.valeo.jim.repository.OperationRepository;
+import ru.valeo.jim.repository.PortfolioRepository;
+import ru.valeo.jim.service.OperationsService;
 
 import static java.util.Optional.ofNullable;
 
@@ -248,6 +270,33 @@ public class OperationsServiceImpl implements OperationsService {
         return BondRedemptionDto.from(operation);
     }
 
+    @Transactional
+    @Override
+    public InstrumentConversionDto instrumentConversion(@NotNull InstrumentConversionDto dto) {
+        var portfolio = loadPortfolio(dto.getPortfolioName());
+        var instrument = loadInstrument(dto.getSymbol());
+        var instrumentPosition = portfolio.getPositions().stream()
+                .filter(position -> position.getInstrument().equals(instrument))
+                .findFirst()
+                .orElseThrow(() -> new InstrumentPositionNotFoundException(portfolio.getName(), dto.getSymbol()));
+
+        var newPrice = instrumentPosition.getAccountingPrice()
+                .multiply(BigDecimal.valueOf(instrumentPosition.getAmount()))
+                .divide(BigDecimal.valueOf(dto.getNewAmount()), applicationConfig.getBigdecimalOperationsScale(), RoundingMode.FLOOR);
+
+        var operation = new Operation()
+                .setType(OperationType.INSTRUMENT_CONVERSION)
+                .setInstrument(instrument)
+                .setPortfolio(portfolio)
+                .setPrice(newPrice)
+                .setAmount(dto.getNewAmount())
+                .setWhenAdd(getWhenAdd(dto));
+        operation = operationRepository.save(operation);
+
+        processOperation(operation);
+        return InstrumentConversionDto.from(operation);
+    }
+
     private Instrument loadInstrument(String symbol) {
         return instrumentRepository.findById(symbol)
                 .orElseThrow(() -> new InstrumentNotFoundException(symbol));
@@ -302,6 +351,9 @@ public class OperationsServiceImpl implements OperationsService {
                         .add(operation.getAccumulatedCouponIncome()));
                 updateInstrumentPositionOnSell(operation);
                 break;
+            case INSTRUMENT_CONVERSION:
+                updateInstrumentPositionOnConversion(operation);
+                break;
             default:
                 throw new UnsupportedOperationException(operation.getType().name());
         }
@@ -343,6 +395,18 @@ public class OperationsServiceImpl implements OperationsService {
         position.setAmount(newAmount);
         position.setAccountingPrice(newAmount > 0 ? calcAccountingPrice(operation.getInstrument(), portfolio.getOperations(), newAmount)
                 : BigDecimal.ZERO);
+    }
+
+    private void updateInstrumentPositionOnConversion(Operation operation) {
+        var portfolio = operation.getPortfolio();
+        var position = portfolio.getPositions().stream()
+                .filter(instrumentPosition -> instrumentPosition.getInstrument().equals(operation.getInstrument()))
+                .findFirst()
+                .orElseThrow(() -> new InstrumentPositionNotFoundException(portfolio.getName(),
+                        operation.getInstrument().getSymbol()));
+
+        position.setAmount(operation.getAmount());
+        position.setAccountingPrice(operation.getPrice());
     }
 
     /** Calc accounting price based on total values and current amount. */
