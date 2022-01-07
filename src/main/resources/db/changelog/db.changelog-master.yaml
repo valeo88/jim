@@ -44,3 +44,7 @@ databaseChangeLog:
   - include:
       file: 20210811-instrument-category-target-distribution.yaml
       relativeToChangelogFile: true
+
+  - include:
+      file: 20220107-instrument-position.yaml
+      relativeToChangelogFile: true

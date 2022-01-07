@@ -1,15 +1,16 @@
 package ru.valeo.jim.dto;
 
+import java.math.BigDecimal;
+
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.valeo.jim.domain.InstrumentPosition;
-
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import java.math.BigDecimal;
 
 @EqualsAndHashCode
 @Getter
@@ -27,6 +28,7 @@ public class InstrumentPositionDto {
     protected String isin;
     @NotNull @Min(1) Integer amount;
     @NotNull @Min(0) BigDecimal accountingPrice;
+    Boolean excludedFromDistribution;
 
     public static InstrumentPositionDto from(InstrumentPosition position) {
         var dto = new InstrumentPositionDto();
@@ -40,6 +42,7 @@ public class InstrumentPositionDto {
         dto.setIsin(position.getInstrument().getIsin());
         dto.setAmount(position.getAmount());
         dto.setAccountingPrice(position.getAccountingPrice());
+        dto.setExcludedFromDistribution(position.getExcludeFromDistribution());
 
         return dto;
     }
@@ -55,6 +58,7 @@ public class InstrumentPositionDto {
                 ", categoryName='" + categoryName + '\'' +
                 ", isin='" + isin + '\'' +
                 ", amount=" + amount +
-                ", accountingPrice=" + accountingPrice + "" + baseCurrencyCode;
+                ", accountingPrice=" + accountingPrice + "" + baseCurrencyCode +
+                ", excludedFromDistribution=" + excludedFromDistribution;
     }
 }

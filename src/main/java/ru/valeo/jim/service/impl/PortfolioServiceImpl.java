@@ -1,31 +1,55 @@
 package ru.valeo.jim.service.impl;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import ru.valeo.jim.config.ApplicationConfig;
-import ru.valeo.jim.domain.*;
+import ru.valeo.jim.domain.Instrument;
+import ru.valeo.jim.domain.InstrumentCategory;
+import ru.valeo.jim.domain.InstrumentCategoryTargetDistribution;
+import ru.valeo.jim.domain.InstrumentPrice;
+import ru.valeo.jim.domain.Operation;
+import ru.valeo.jim.domain.Portfolio;
 import ru.valeo.jim.dto.InstrumentPositionDto;
 import ru.valeo.jim.dto.PortfolioDto;
 import ru.valeo.jim.dto.PortfolioInstrumentsDistributionDto;
 import ru.valeo.jim.dto.PortfolioRebalancePropositionDto;
-import ru.valeo.jim.dto.operation.*;
+import ru.valeo.jim.dto.operation.AddMoneyDto;
+import ru.valeo.jim.dto.operation.BondRedemptionDto;
+import ru.valeo.jim.dto.operation.BuyInstrumentDto;
+import ru.valeo.jim.dto.operation.CouponDto;
+import ru.valeo.jim.dto.operation.DividendDto;
+import ru.valeo.jim.dto.operation.OperationDto;
+import ru.valeo.jim.dto.operation.SellInstrumentDto;
+import ru.valeo.jim.dto.operation.TaxDto;
+import ru.valeo.jim.dto.operation.WithdrawMoneyDto;
 import ru.valeo.jim.exception.CurrencyNotFoundException;
 import ru.valeo.jim.exception.InstrumentCategoryNotFoundException;
+import ru.valeo.jim.exception.InstrumentPositionNotFoundException;
 import ru.valeo.jim.exception.PortfolioNotFoundException;
 import ru.valeo.jim.exception.UnexpectedValueException;
-import ru.valeo.jim.repository.*;
+import ru.valeo.jim.repository.CurrencyRepository;
+import ru.valeo.jim.repository.InstrumentCategoryRepository;
+import ru.valeo.jim.repository.InstrumentPriceRepository;
+import ru.valeo.jim.repository.OperationRepository;
+import ru.valeo.jim.repository.PortfolioRepository;
 import ru.valeo.jim.service.PortfolioRebalanceHelper;
 import ru.valeo.jim.service.PortfolioService;
-
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 
@@ -138,6 +162,9 @@ public class PortfolioServiceImpl implements PortfolioService {
     public PortfolioInstrumentsDistributionDto getInstrumentsDistributionByAccoutingPrice(String portfolioName) {
         return portfolioRepository.findById(getOrDefaultPortfolioName(portfolioName))
                 .map(Portfolio::getPositions)
+                .map(positions -> positions.stream()
+                        .filter(position -> !position.getExcludeFromDistribution())
+                        .collect(Collectors.toList()))
                 .map(positions -> PortfolioInstrumentsDistributionDto.byAccountingPrice(positions,
                         applicationConfig.getBigdecimalOperationsScale()))
                 .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
@@ -152,6 +179,9 @@ public class PortfolioServiceImpl implements PortfolioService {
                 .collect(Collectors.toMap(InstrumentPrice::getInstrument, InstrumentPrice::getPrice, (a, b) -> a));
         return portfolioRepository.findById(getOrDefaultPortfolioName(portfolioName))
                 .map(Portfolio::getPositions)
+                .map(positions -> positions.stream()
+                        .filter(position -> !position.getExcludeFromDistribution())
+                        .collect(Collectors.toList()))
                 .map(positions -> PortfolioInstrumentsDistributionDto.byActualPrice(positions,
                         actualPrices, applicationConfig.getBigdecimalOperationsScale()))
                 .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
@@ -181,6 +211,20 @@ public class PortfolioServiceImpl implements PortfolioService {
         operationRepository.deleteAll(portfolio.getOperations());
         portfolio.getPositions().clear();
         portfolio.setAvailableMoney(BigDecimal.ZERO);
+        portfolioRepository.save(portfolio);
+    }
+
+    @Transactional
+    @Override
+    public void toggleExcludeInstrumentFromDistribution(@NotBlank String symbol, String portfolioName) {
+        var portfolio = portfolioRepository.findById(getOrDefaultPortfolioName(portfolioName))
+                .orElseThrow(() -> new PortfolioNotFoundException(portfolioName));
+        var position = portfolio.getPositions().stream()
+                .filter(instrumentPosition -> symbol.equals(instrumentPosition.getInstrument().getSymbol()))
+                .findFirst()
+                .orElseThrow(() -> new InstrumentPositionNotFoundException(portfolio.getName(), symbol));
+        var currentValue = position.getExcludeFromDistribution();
+        position.setExcludeFromDistribution(!currentValue);
         portfolioRepository.save(portfolio);
     }
 

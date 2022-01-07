@@ -1,0 +1,23 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20220107-instrument-position
+      author: valeo88
+      context: dev or test or prod
+      changes:
+        - addColumn:
+            tableName: instrument_position
+            columns:
+              - column:
+                  name: exclude_from_distribution
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+        - tagDatabase:
+            tag: 0.0.12
+      rollback:
+        - dropColumn:
+            columnName: exclude_from_distribution
+            tableName: instrument_position

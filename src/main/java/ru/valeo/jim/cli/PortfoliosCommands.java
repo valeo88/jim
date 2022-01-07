@@ -1,5 +1,7 @@
 package ru.valeo.jim.cli;
 
+import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
@@ -8,8 +10,6 @@ import ru.valeo.jim.dto.InstrumentPositionDto;
 import ru.valeo.jim.dto.PortfolioDto;
 import ru.valeo.jim.service.PortfolioService;
 import ru.valeo.jim.service.util.DateTimeHelper;
-
-import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 import static org.springframework.shell.standard.ShellOption.NULL;
@@ -115,5 +115,12 @@ public class PortfoliosCommands {
         } catch (RuntimeException e) {
             return e.getMessage();
         }
+    }
+
+    @ShellMethod(value = "Toggle instrument from distribution", key = "toggle-exclude-instrument-from-distribution")
+    public String toggleExcludeInstrumentFromDistribution(String symbol,
+                                 @ShellOption(defaultValue = NULL) String portfolioName) {
+        portfolioService.toggleExcludeInstrumentFromDistribution(symbol, portfolioName);
+        return "Toggle excluding instrument from distribution in portfolio";
     }
 }

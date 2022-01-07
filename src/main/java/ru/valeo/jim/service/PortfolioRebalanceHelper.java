@@ -1,14 +1,5 @@
 package ru.valeo.jim.service;
 
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import ru.valeo.jim.config.ApplicationConfig;
-import ru.valeo.jim.domain.*;
-import ru.valeo.jim.dto.PortfolioRebalancePropositionDto;
-import ru.valeo.jim.repository.InstrumentPriceRepository;
-
-import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -16,6 +7,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import javax.validation.constraints.NotNull;
+
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.valeo.jim.config.ApplicationConfig;
+import ru.valeo.jim.domain.InstrumentCategory;
+import ru.valeo.jim.domain.InstrumentCategoryTargetDistribution;
+import ru.valeo.jim.domain.InstrumentPosition;
+import ru.valeo.jim.domain.InstrumentPrice;
+import ru.valeo.jim.domain.OperationType;
+import ru.valeo.jim.domain.Portfolio;
+import ru.valeo.jim.dto.PortfolioRebalancePropositionDto;
+import ru.valeo.jim.repository.InstrumentPriceRepository;
 
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
@@ -41,7 +47,10 @@ public class PortfolioRebalanceHelper {
         }
 
         final var availableMoney = useAvailableMoney ? portfolio.getAvailableMoney() : BigDecimal.ZERO;
-        final var totalPriceByCategoryActual = getTotalPricesByCategory(portfolio.getPositions());
+        final var instrumentPositions = portfolio.getPositions().stream()
+                .filter(position -> !position.getExcludeFromDistribution())
+                .collect(Collectors.toList());
+        final var totalPriceByCategoryActual = getTotalPricesByCategory(instrumentPositions);
         final var totalInstrumentsActualPrice = totalPriceByCategoryActual.values().stream()
                 .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         Map<InstrumentCategory, BigDecimal> totalPriceByCategoryTarget = targetPercentDistribution.entrySet()
